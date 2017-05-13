@@ -15,6 +15,7 @@ Welcome to ylzone's documentation!
    docs/Elasticsearch/es_pool.rst
    docs/Mysql/mysql_pool.rst
    docs/Nginx/nginx_pool.rst
+   docs/Docker/docker_pool.rst
 
 
 Indices and tables

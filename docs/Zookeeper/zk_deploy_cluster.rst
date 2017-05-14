@@ -10,21 +10,26 @@
     操作系统: Centos 6.5
     系统内核: Linux version 2.6.32-431.el6.x86_64
     操作用户: root
-    运行用户: kafka
+    运行用户: zookep
     软件版本: kafka_2.11-0.10.0.0
-    部署位置: /opt/kafka
-    配置目录: /data/kafka/conf
-    数据目录: /data/kafka/data
-    日志目录: /data/kafka/logs
-    PID 目录: /data/kafka/run
-    所需文件: kafka_2.11-0.10.0.0.tgz、zookeeper-3.4.9.tar.gz
+    部署位置: /opt/zookeeper
+    配置目录: /data/zookeeper/conf
+    数据目录: /data/zookeeper/data
+    日志目录: /data/zookeeperlogs
+    PID 目录: /data/zookeeper/run
+    所需文件: zookeeper-3.4.9.tar.gz
     
 1.2 分布说明::
 
-    192.168.182.101    node1    zookeeper kafka
-    192.168.182.102    node2    zookeeper kafka
-    192.168.182.103    node3    zookeeper kafka
+    192.168.182.101    node1    zookeeper
+    192.168.182.102    node2    zookeeper
+    192.168.182.103    node3    zookeeper
 
+1.3 端口介绍::
+
+    2181:
+    2888:
+    3888:
 
 ..
    1.2 相关地址::
@@ -41,15 +46,16 @@
 
     $ yum install jdk-8u60-linux-x64.rpm
 
-2.1 创建运行用户::
+2.2 创建运行用户::
 
-    $ useradd -M -s /sbin/nologin -u 9092 kafka
+    $ useradd -M -s /sbin/nologin -u 2181 zookep
 
 2.3 创建所需目录::
 
-    $ mkdir -p /data/kafka && cd /data/kafka
-    $ mkdir conf data logs temp run
-    $ chown -R kafka:kafka /data/mysql
+    $ mkdir -p /data/zookeeper && cd /data/zookeeper
+    $ mkdir conf data logs run
+    $ chown -R zookep:zookep /data/zookeeper
+    $ chown root:root /data/zookeeper
     $ chown -R root:root /data/kafka/conf
 
 3 安装程序
@@ -58,155 +64,65 @@
 3.1 解压软件包::
 
     $ cd /tmp
-    $ tar xf kafka_2.11-0.10.0.0.tgz -C /opt
-    $ ln -sv /opt/kafka_2.11-0.10.0.0 /opt/kafka
+    $ tar xf zookeeper-3.4.9.tar.gz -C /opt
+    $ ln -sv /opt/zookeeper-3.4.9/ /opt/zookeeper
 
 3.2 创建所需文件::
 
-    $ cp /opt/kafka/conf/* /data/kafka/conf
-    $ mv /opt/kafka/conf /opt/kafka/conf.default
+    $ cp /opt/zookeeper/conf/* /data/zookeeper/conf
+    $ mv /opt/zookeeper/conf /opt/zookeeper/conf.default
 
 3.3 删除多余文件::
     
-    $ rm -rf /opt/kafka/bin/windows
-
-.. node::
-
-    /opt/kafka/bin/windows 此目录下为windows下所用脚本在linux中无用可删除
+    $ rm -rf /opt/zookeeper/recipes
+    $ rm -rf /opt/zookeeper/src
+    $ rm -rf /opt/zookeeper/docs
+    $ rm -f /opt/zookeeper/zookeeper-3.4.9.jar.{asc,md5,sha1}
+    $ rm -f /opt/zookeeper/bin/README.txt
+    $ rm -f /opt/zookeeper/bin/*.cmd
 
 4 修改配置
 ----------
 
-4.1 编辑配置文件 ``node1上操作`` :
+4.1 生成myid文件::
+
+    echo 1 > /data/zookeeper/data/myid    # node1上操作
+    echo 2 > /data/zookeeper/data/myid    # node2上操作
+    echo 3 > /data/zookeeper/data/myid    # node3上操作
+
+4.2 编辑配置文件 ``node1上操作`` :
 
 .. code-block:: bash
 
-    $ vim /data/kafka/conf/server.properties
+    $ vim /data/zookeeper/conf/zoo.cfg
     # 添加如下内容:
-    ############################# Server Basics #############################
-    broker.id=101
+    tickTime=2000
+    initLimit=10
+    syncLimit=5
+    dataDir=/data/zookeeper/data 
+    dataLogDir=/data/zookeeper/data
 
-    ############################# Socket Server Settings #############################
-    listeners=PLAINTEXT://:9092
-    port=9092
-    host.name=192.168.182.101
+    autopurge.purgeInterval=24
+    autopurge.snapRetainCount=500
 
-    num.network.threads=3
-    num.io.threads=8
+    clientPort=2181
+    server.1=IP1:2888:3888
+    server.2=IP2:2888:3888
+    server.3=IP3:2888:3888
 
-    socket.send.buffer.bytes=102400
-    socket.receive.buffer.bytes=102400
-    socket.request.max.bytes=104857600
+4.3 同步配置文件 ``node1上操作`` ::
 
-    ############################# Log Basics #############################
-    log.dirs=/data/kafka/data
+    scp /data/zookeeper/conf/zoo.cfg node2:/data/zookeeper/conf/zoo.cfg
+    scp /data/zookeeper/conf/zoo.cfg node3:/data/zookeeper/conf/zoo.cfg
 
-    num.partitions=1
-    num.recovery.threads.per.data.dir=1
-
-    ############################# Log Flush Policy #############################
-    #log.flush.interval.messages=10000
-    #log.flush.interval.ms=1000
-
-    ############################# Log Retention Policy #############################
-    log.retention.hours=1
-    log.segment.bytes=1073741824
-    log.retention.check.interval.ms=300000
-
-    ############################# Zookeeper #############################
-    zookeeper.connect=node1:2181,node2:node3:2181/kafka
-    zookeeper.connection.timeout.ms=6000
-    delete.topic.enable=true
-
-4.2 编辑配置文件 ``node2上操作`` :
-
-.. code-block:: bash
-
-    $ vim /data/kafka/conf/server.properties
-    # 添加如下内容:
-    ############################# Server Basics #############################
-    broker.id=102
-
-    ############################# Socket Server Settings #############################
-    listeners=PLAINTEXT://:9092
-    port=9092
-    host.name=192.168.182.102
-
-    num.network.threads=3
-    num.io.threads=8
-
-    socket.send.buffer.bytes=102400
-    socket.receive.buffer.bytes=102400
-    socket.request.max.bytes=104857600
-
-    ############################# Log Basics #############################
-    log.dirs=/data/kafka/data
-
-    num.partitions=1
-    num.recovery.threads.per.data.dir=1
-
-    ############################# Log Flush Policy #############################
-    #log.flush.interval.messages=10000
-    #log.flush.interval.ms=1000
-
-    ############################# Log Retention Policy #############################
-    log.retention.hours=1
-    log.segment.bytes=1073741824
-    log.retention.check.interval.ms=300000
-
-    ############################# Zookeeper #############################
-    zookeeper.connect=node1:2181,node2:node3:2181/kafka
-    zookeeper.connection.timeout.ms=6000
-    delete.topic.enable=true
- 
-4.3 编辑配置文件 ``node3上操作`` :
-
-.. code-block:: bash
-
-    $ vim /data/kafka/conf/server.properties
-    # 添加如下内容:
-    ############################# Server Basics #############################
-    broker.id=103
-
-    ############################# Socket Server Settings #############################
-    listeners=PLAINTEXT://:9092
-    port=9092
-    host.name=192.168.182.103
-
-    num.network.threads=3
-    num.io.threads=8
-
-    socket.send.buffer.bytes=102400
-    socket.receive.buffer.bytes=102400
-    socket.request.max.bytes=104857600
-
-    ############################# Log Basics #############################
-    log.dirs=/data/kafka/data
-
-    num.partitions=1
-    num.recovery.threads.per.data.dir=1
-
-    ############################# Log Flush Policy #############################
-    #log.flush.interval.messages=10000
-    #log.flush.interval.ms=1000
-
-    ############################# Log Retention Policy #############################
-    log.retention.hours=1
-    log.segment.bytes=1073741824
-    log.retention.check.interval.ms=300000
-
-    ############################# Zookeeper #############################
-    zookeeper.connect=node1:2181,node2:node3:2181/kafka
-    zookeeper.connection.timeout.ms=6000
-    delete.topic.enable=true
 
 5 启动程序
 ----------
 
 5.1 启动命令::
     
-    $ cd /opt/mysql/bin
-    $ su kafka -c "setsid bin/kafka-server-start.sh config/server.properties &> /data/kafka/logs/kafka.out"
+    $ cd /opt/zookeeper
+    $ zkServer.sh start
 
 5.2 规范启动::
 
@@ -246,36 +162,28 @@
 
 .. code-block:: bash
 
-    $ vim /etc/profile.d/mysql.sh
+    $ vim /etc/profile.d/zookeeper.sh
     # 添加如下内容:
-    PATH=$PATH:/opt/mysql/bin
+    PATH=$PATH:/opt/zookeeper/bin
     export PATH
-    $ source /etc/profile.d/mysql.sh
+    $ source /etc/profile.d/zookeeper.sh
 
 7 补充说明
 
 7.1 主要配置说明:
 
-``broker.id`` ::
+``dataDir`` ::
 
-    broker的id在集群中的唯一正整数标示
+    数据快照目录
 
-``listeners`` ::
+``dataLogDir`` ::
 
-    ...
+    事务日志目录，类似mysqlbinlog日志、redis的aof日志。
 
-``port`` ::
+``autopurge.purgeInterval`` ::
 
-    server接受客户端连接的端口
+    这个参数指定了清理频率，单位是小时，需要填写一个1或更大的整数，默认是0，表示不开启自己清理功能。
 
-``host.name`` ::
+``autopurge.snapRetainCount`` ::
 
-    ...
-
-``log.dirs`` ::
-
-    接收消息的数据目录
-
-``zookeeper.connect``::
-
-    zookeeper的连接地址,格式为 ``node1:port,node2:port/chroot ``
+    这个参数和上面的参数搭配使用，这个参数指定了需要保留的文件数目。默认是保留3个。

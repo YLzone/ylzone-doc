@@ -1,8 +1,8 @@
 =================
-Zookeeper相关内容
+Mysql相关内容
 =================
 
 .. toctree::
    :maxdepth: 1
 
-   zk_deploy_cluster.rst
+   kafka_deploy_cluster.rst

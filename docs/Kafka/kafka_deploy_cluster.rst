@@ -70,7 +70,7 @@
     
     $ rm -rf /opt/kafka/bin/windows
 
-.. node::
+.. note::
 
     /opt/kafka/bin/windows 此目录下为windows下所用脚本在linux中无用可删除
 

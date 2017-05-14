@@ -1,6 +1,6 @@
-====================
-[部署]-集群部署kafka
-====================
+========================
+[部署]-集群部署zookeeper
+========================
 
 1 背景介绍
 ----------
@@ -11,7 +11,7 @@
     系统内核: Linux version 2.6.32-431.el6.x86_64
     操作用户: root
     运行用户: zookep
-    软件版本: kafka_2.11-0.10.0.0
+    软件版本: zookeeper-3.4.9
     部署位置: /opt/zookeeper
     配置目录: /data/zookeeper/conf
     数据目录: /data/zookeeper/data
@@ -21,15 +21,20 @@
     
 1.2 分布说明::
 
-    192.168.182.101    node1    zookeeper
-    192.168.182.102    node2    zookeeper
-    192.168.182.103    node3    zookeeper
+    192.168.182.101    VM01    zookeeper
+    192.168.182.102    VM02    zookeeper
+    192.168.182.103    VM03    zookeeper
 
 1.3 端口介绍::
 
     2181:
     2888:
     3888:
+
+1.4 操作命令::
+
+    zookeeper-server
+    zookeeper-client
 
 ..
    1.2 相关地址::
@@ -50,13 +55,28 @@
 
     $ useradd -M -s /sbin/nologin -u 2181 zookep
 
-2.3 创建所需目录::
+2.3 创建所需文件::
 
     $ mkdir -p /data/zookeeper && cd /data/zookeeper
     $ mkdir conf data logs run
     $ chown -R zookep:zookep /data/zookeeper
     $ chown root:root /data/zookeeper
-    $ chown -R root:root /data/kafka/conf
+    $ chown -R root:root /data/zookeeper/conf
+    $ ls -sv /data/zookeeper/conf/ /opt/zookeeper/conf
+
+2.4 修改hosts文件 ``所有节点`` :
+
+.. code-block:: bash
+
+    $ vim /etc/hosts
+    # 添加如下内容
+    192.168.182.101 VM01
+    192.168.182.102 VM02
+    192.168.182.103 VM03
+    
+.. note::
+
+    如果你使用了内部DNS服务器则不需要修改此文件，否则请按照操作实行。
 
 3 安装程序
 ----------
@@ -86,11 +106,11 @@
 
 4.1 生成myid文件::
 
-    echo 1 > /data/zookeeper/data/myid    # node1上操作
-    echo 2 > /data/zookeeper/data/myid    # node2上操作
-    echo 3 > /data/zookeeper/data/myid    # node3上操作
+    echo 1 > /data/zookeeper/data/myid    # VM01上操作
+    echo 2 > /data/zookeeper/data/myid    # VM02上操作
+    echo 3 > /data/zookeeper/data/myid    # VM03上操作
 
-4.2 编辑配置文件 ``node1上操作`` :
+4.2 编辑配置文件 ``VM01上操作`` :
 
 .. code-block:: bash
 
@@ -106,14 +126,14 @@
     autopurge.snapRetainCount=500
 
     clientPort=2181
-    server.1=IP1:2888:3888
-    server.2=IP2:2888:3888
-    server.3=IP3:2888:3888
+    server.1=VM01:2888:3888
+    server.2=VM02:2888:3888
+    server.3=VM03:2888:3888
 
-4.3 同步配置文件 ``node1上操作`` ::
+4.3 同步配置文件 ``VM01上操作`` ::
 
-    scp /data/zookeeper/conf/zoo.cfg node2:/data/zookeeper/conf/zoo.cfg
-    scp /data/zookeeper/conf/zoo.cfg node3:/data/zookeeper/conf/zoo.cfg
+    scp /data/zookeeper/conf/zoo.cfg VM02:/data/zookeeper/conf/zoo.cfg
+    scp /data/zookeeper/conf/zoo.cfg VM03:/data/zookeeper/conf/zoo.cfg
 
 
 5 启动程序
@@ -135,10 +155,10 @@
 
     # 创建一个topic
     $ cd /opt/kafka
-    $ bin/kafka-topics.sh --create --zookeeper node1:2181,node2:2181,node3:2181/kafka --replication-factor 1 --partitions 1 --topic  test
+    $ bin/kafka-topics.sh --create --zookeeper VM01:2181,VM02:2181,VM03:2181/kafka --replication-factor 1 --partitions 1 --topic  test
     
     # 查看创建的topic
-    $ bin/kafka-topics.sh --list --zookeeper node1:2181,node2:2181,node3:2181/kafka
+    $ bin/kafka-topics.sh --list --zookeeper VM01:2181,VM02:2181,VM03:2181/kafka
 
     # 启动一个消费者
     $ bin/kafka-console-consumer.sh --zookeeper  ZKF1.S0001.WJ-KF-B.BJ.JRX:2181/kafka --topic test 

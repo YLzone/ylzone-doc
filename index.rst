@@ -16,6 +16,7 @@ Welcome to ylzone's documentation!
    docs/Mysql/mysql_pool.rst
    docs/Nginx/nginx_pool.rst
    docs/Docker/docker_pool.rst
+   docs/Zookeeper/zk_pool.rst
    docs/Kafka/kafka_pool.rst
 
 

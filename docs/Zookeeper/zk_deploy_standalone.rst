@@ -1,5 +1,5 @@
 ========================
-[部署]-集群部署zookeeper
+[部署]-单机部署zookeeper
 ========================
 
 
@@ -28,14 +28,10 @@
 1.3 分布说明::
 
     192.168.182.101    VM01    zookeeper
-    192.168.182.102    VM02    zookeeper
-    192.168.182.103    VM03    zookeeper
 
 1.4 端口介绍::
 
     2181: 表示和客户端通信的接口
-    2888: 表示集群间交换信息的端口；
-    3888: 表示集群选取"Ladaer"的通信端口。
 
 1.5 操作命令::
 
@@ -68,15 +64,13 @@
     $ mkdir conf data logs run
 
 
-2.4 修改hosts文件 ``所有节点`` :
+2.4 修改hosts文件:
 
 .. code-block:: bash
 
     $ vim /etc/hosts
     # 添加如下内容
     192.168.182.101 VM01
-    192.168.182.102 VM02
-    192.168.182.103 VM03
     
 .. note::
 
@@ -85,7 +79,7 @@
 3 安装程序
 ----------
 
-3.1 解压软件包``所有节点``::
+3.1 解压软件包::
 
     $ cd /tmp
     $ tar xf zookeeper-3.4.9.tar.gz -C /opt
@@ -115,13 +109,7 @@
 4 修改配置
 ----------
 
-4.1 生成myid文件::
-
-    $ echo 1 > /data/zookeeper/data/myid    # VM01上操作
-    $ echo 2 > /data/zookeeper/data/myid    # VM02上操作
-    $ echo 3 > /data/zookeeper/data/myid    # VM03上操作
-
-4.2 编辑配置文件 ``VM01上操作`` :
+4.1 编辑配置文件:
 
 .. code-block:: bash
 
@@ -137,15 +125,6 @@
     autopurge.snapRetainCount=500
 
     clientPort=2181
-    server.1=VM01:2888:3888
-    server.2=VM02:2888:3888
-    server.3=VM03:2888:3888
-
-4.3 同步配置文件 ``VM01上操作`` ::
-
-    scp /data/zookeeper/conf/zoo.cfg VM02:/data/zookeeper/conf/zoo.cfg
-    scp /data/zookeeper/conf/zoo.cfg VM03:/data/zookeeper/conf/zoo.cfg
-
 
 5 启动程序
 ----------
@@ -164,17 +143,10 @@
 
 .. code-block:: bash
     
-    # Leader节点显示的状态
     $ /usr/local/zookeeper-3.4.6/bin/zkServer.sh status
-    JMX enabled by default
-    Using config: /usr/local/zookeeper-3.4.6/bin/../conf/zoo.cfg
-    Mode: leader
-    
-    # Follower节点显示的状态
-    $ /opt/zookeeper/bin/zkServer.sh status
-    JMX enabled by default
+    ZooKeeper JMX enabled by default
     Using config: /opt/zookeeper/bin/../conf/zoo.cfg
-    Mode: follower
+    Mode: standalone
 
 方法二:
 
@@ -183,46 +155,16 @@
     $ echo stat | nc VM01 2181
     Zookeeper version: 3.4.9-1757313, built on 08/23/2016 06:50 GMT
     Clients:
-     /192.168.182.101:38440[0](queued=0,recved=1,sent=0)
+     /192.168.182.101:38558[0](queued=0,recved=1,sent=0)
 
     Latency min/avg/max: 0/0/0
-    Received: 37
-    Sent: 36
+    Received: 2
+    Sent: 1
     Connections: 1
     Outstanding: 0
     Zxid: 0x0
-    Mode: follower
+    Mode: standalone
     Node count: 4
-
-    $ echo stat | nc VM02 2181
-    Zookeeper version: 3.4.9-1757313, built on 08/23/2016 06:50 GMT
-    Clients:
-     /192.168.182.101:34330[0](queued=0,recved=1,sent=0)
-
-    Latency min/avg/max: 0/0/0
-    Received: 9
-    Sent: 8
-    Connections: 1
-    Outstanding: 0
-    Zxid: 0x100000000
-    Mode: follower
-    Node count: 4
-
-    $ echo stat | nc VM03 2181
-    Zookeeper version: 3.4.9-1757313, built on 08/23/2016 06:50 GMT
-    Clients:
-     /192.168.182.101:47964[0](queued=0,recved=1,sent=0)
-
-    Latency min/avg/max: 0/0/0
-    Received: 4
-    Sent: 3
-    Connections: 1
-    Outstanding: 0
-    Zxid: 0x100000000
-    Mode: leader
-    Node count: 4
-
-
 
 6 规范环境
 ----------
@@ -278,7 +220,3 @@
 ``syncLimit``::
  
  	这个配置项标识 Leader 与 Follower 之间发送消息，请求和应答时间长度，最长不能超过多少个 tickTime 的时间长度，总的时间长度就是 5*2000=10 秒
-    
-``server.A=B:C:D``::
-
-	其中 A 是一个数字（myid的内容），表示这个是第几号服务器；B 是这个服务器的 ip 地址；C 表示的是这个服务器与集群中的 Leader 服务器交换信息的端口；D 表示的是万一集群中的 Leader 服务器挂了，需要一个端口来重新进行选举，选出一个新的 Leader，而这个端口就是用来执行选举时服务器相互通信的端口。如果是伪集群的配置方式，由于 B 都是一样，所以不同的 Zookeeper 实例通信端口号不能一样，所以要给它们分配不同的端口号。

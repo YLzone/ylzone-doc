@@ -19,7 +19,7 @@
     PID 目录: /data/zookeeper/run
     所需文件: zookeeper-3.4.9.tar.gz
     
-1.2 安全级别
+1.2 安全级别::
 
 	权限级别: 高
     数据同步: 中

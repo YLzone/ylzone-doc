@@ -2,6 +2,7 @@
 [部署]-集群部署zookeeper
 ========================
 
+
 1 背景介绍
 ----------
 
@@ -21,10 +22,9 @@
     
 1.2 安全级别::
 
-	权限级别: 高
+    权限级别: 高
     数据同步: 中
 
-    
 1.3 分布说明::
 
     192.168.182.101    VM01    zookeeper
@@ -49,6 +49,7 @@
     智能安装: 
    1.3 关键命令::
     mysql mysqldump
+
 
 2 解决依赖
 ----------
@@ -106,6 +107,7 @@
     $ rm -f /opt/zookeeper/zookeeper-3.4.9.jar.{asc,md5,sha1}
     $ rm -f /opt/zookeeper/bin/README.txt
     $ rm -f /opt/zookeeper/bin/*.cmd
+
 
 4 修改配置
 ----------
@@ -193,7 +195,9 @@
     export PATH
     $ source /etc/profile.d/zookeeper.sh
 
+
 7 补充说明
+----------
 
 7.1 主要配置说明:
 

@@ -160,22 +160,18 @@
 5.3 验证部署:
 
 .. code-block:: bash
-
-    # 创建一个topic
-    $ cd /opt/kafka
-    $ bin/kafka-topics.sh --create --zookeeper VM01:2181,VM02:2181,VM03:2181/kafka --replication-factor 1 --partitions 1 --topic  test
     
-    # 查看创建的topic
-    $ bin/kafka-topics.sh --list --zookeeper VM01:2181,VM02:2181,VM03:2181/kafka
-
-    # 启动一个消费者
-    $ bin/kafka-console-consumer.sh --zookeeper  ZKF1.S0001.WJ-KF-B.BJ.JRX:2181/kafka --topic test 
-
-    # 启动一个生产者(在另一个终端中)
-    $ bin/kafka-console-producer.sh --broker-list note:9092 --topic test
-    hello world       <== 输入信息
+    # Leader节点显示的状态
+    $ /usr/local/zookeeper-3.4.6/bin/zkServer.sh status
+    JMX enabled by default
+    Using config: /usr/local/zookeeper-3.4.6/bin/../conf/zoo.cfg
+    Mode: leader
     
-    # 当在生产者终端中输入信息后，此信息应该会出现在消费者终端，否则为异常。
+    # Follower节点显示的状态
+    $ /opt/zookeeper/bin/zkServer.sh status
+    JMX enabled by default
+    Using config: /opt/zookeeper/bin/../conf/zoo.cfg
+    Mode: follower
 
 
 6 规范环境

@@ -17,13 +17,21 @@
     数据目录: /data/kafka/data
     日志目录: /data/kafka/logs
     PID 目录: /data/kafka/run
-    所需文件: kafka_2.11-0.10.0.0.tgz、zookeeper-3.4.9.tar.gz
-    
+    所需文件: kafka_2.11-0.10.0.0.tgz
+
+1.2 依赖服务::
+
+    组件名称: zookeeper
+
+.. note::
+
+    kafka依赖zookeeper服务需要提前部署好，本文档使用的是zookeeper-3.4.9版本。
+
 1.2 分布说明::
 
-    192.168.182.101    node1    zookeeper kafka
-    192.168.182.102    node2    zookeeper kafka
-    192.168.182.103    node3    zookeeper kafka
+    192.168.182.101    VM01    zookeeper kafka
+    192.168.182.102    VM02    zookeeper kafka
+    192.168.182.103    VM03    zookeeper kafka
 
 
 ..
@@ -37,38 +45,53 @@
 2 解决依赖
 ----------
 
-2.1 安装依赖组件::
+2.1 安装依赖组件 ``所有节点``::
 
     $ yum install jdk-8u60-linux-x64.rpm
 
-2.1 创建运行用户::
+2.2 创建运行用户 ``所有节点``::
 
     $ useradd -M -s /sbin/nologin -u 9092 kafka
 
-2.3 创建所需目录::
+2.3 创建所需目录 ``所有节点``::
 
     $ mkdir -p /data/kafka && cd /data/kafka
     $ mkdir conf data logs temp run
-    $ chown -R kafka:kafka /data/mysql
-    $ chown -R root:root /data/kafka/conf
+
+2.4 修改hosts文件 ``所有节点``:
+
+.. code-block:: bash
+
+    $ vim /etc/hosts
+    # 添加如下内容
+    192.168.182.101 VM01
+    192.168.182.102 VM02
+    192.168.182.103 VM03
 
 3 安装程序
 ----------
 
-3.1 解压软件包::
+3.1 解压软件包 ``所有节点``::
 
     $ cd /tmp
     $ tar xf kafka_2.11-0.10.0.0.tgz -C /opt
-    $ ln -sv /opt/kafka_2.11-0.10.0.0 /opt/kafka
+    $ ln -sv /opt/kafka_2.11-0.10.0.0/ /opt/kafka
 
-3.2 创建所需文件::
+3.2 创建所需文件 ``所有节点``::
 
-    $ cp /opt/kafka/conf/* /data/kafka/conf
-    $ mv /opt/kafka/conf /opt/kafka/conf.default
+    $ cp /opt/kafka/config/* /data/kafka/conf
+    $ mv /opt/kafka/config /opt/kafka/config.default
+    $ ln -sv /data/kafka/conf/ /opt/kafka/config
 
-3.3 删除多余文件::
+3.3 删除多余文件 ``所有节点``::
     
     $ rm -rf /opt/kafka/bin/windows
+
+3.4 修改文件权限 ``所有节点``::
+
+    $ chown -R kafka:kafka /data/kafka
+    $ chown -R root:root /data/kafka/conf
+    $ chown root:root /data/kafka
 
 .. note::
 
@@ -77,7 +100,7 @@
 4 修改配置
 ----------
 
-4.1 编辑配置文件 ``node1上操作`` :
+4.1 编辑配置文件 ``VM01上操作`` :
 
 .. code-block:: bash
 
@@ -114,11 +137,11 @@
     log.retention.check.interval.ms=300000
 
     ############################# Zookeeper #############################
-    zookeeper.connect=node1:2181,node2:node3:2181/kafka
+    zookeeper.connect=VM01:2181,VM02:VM03:2181/kafka
     zookeeper.connection.timeout.ms=6000
     delete.topic.enable=true
 
-4.2 编辑配置文件 ``node2上操作`` :
+4.2 编辑配置文件 ``VM02上操作`` :
 
 .. code-block:: bash
 
@@ -155,11 +178,11 @@
     log.retention.check.interval.ms=300000
 
     ############################# Zookeeper #############################
-    zookeeper.connect=node1:2181,node2:node3:2181/kafka
+    zookeeper.connect=VM01:2181,VM02:VM03:2181/kafka
     zookeeper.connection.timeout.ms=6000
     delete.topic.enable=true
  
-4.3 编辑配置文件 ``node3上操作`` :
+4.3 编辑配置文件 ``VM03上操作`` :
 
 .. code-block:: bash
 
@@ -196,7 +219,7 @@
     log.retention.check.interval.ms=300000
 
     ############################# Zookeeper #############################
-    zookeeper.connect=node1:2181,node2:node3:2181/kafka
+    zookeeper.connect=VM01:2181,VM02:VM03:2181/kafka
     zookeeper.connection.timeout.ms=6000
     delete.topic.enable=true
 
@@ -206,29 +229,29 @@
 5.1 启动命令::
     
     $ cd /opt/mysql/bin
-    $ su kafka -c "setsid bin/kafka-server-start.sh config/server.properties &> /data/kafka/logs/kafka.out"
+    $ sudo -u kafka bin/kafka-server-start.sh -daemon config/server.properties
 
 5.2 规范启动::
 
     $ cd /data/kafka
     $ ./kafka start
 
-5.3 验证部署:
+5.3 验证部署 ``任意节点``:
 
 .. code-block:: bash
 
     # 创建一个topic
     $ cd /opt/kafka
-    $ bin/kafka-topics.sh --create --zookeeper node1:2181,node2:2181,node3:2181/kafka --replication-factor 1 --partitions 1 --topic  test
+    $ bin/kafka-topics.sh --create --zookeeper VM01:2181,VM02:2181,VM03:2181/kafka --replication-factor 1 --partitions 1 --topic  test
     
     # 查看创建的topic
-    $ bin/kafka-topics.sh --list --zookeeper node1:2181,node2:2181,node3:2181/kafka
+    $ bin/kafka-topics.sh --list --zookeeper VM01:2181,VM02:2181,VM03:2181/kafka
 
     # 启动一个消费者
     $ bin/kafka-console-consumer.sh --zookeeper  ZKF1.S0001.WJ-KF-B.BJ.JRX:2181/kafka --topic test 
 
     # 启动一个生产者(在另一个终端中)
-    $ bin/kafka-console-producer.sh --broker-list note:9092 --topic test
+    $ bin/kafka-console-producer.sh --broker-list VM01:9092 --topic test
     hello world       <== 输入信息
     
     # 当在生产者终端中输入信息后，此信息应该会出现在消费者终端，否则为异常。

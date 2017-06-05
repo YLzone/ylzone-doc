@@ -18,6 +18,7 @@ Welcome to ylzone's documentation!
    docs/Docker/docker_pool.rst
    docs/Zookeeper/zk_pool.rst
    docs/Kafka/kafka_pool.rst
+   docs/Tomcat/tomcat_pool.rst
 
 
 Indices and tables

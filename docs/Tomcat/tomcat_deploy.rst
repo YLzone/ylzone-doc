@@ -89,18 +89,20 @@
 3.1 解压软件包::
 
     $ cd /tmp
-    $ tar xf apache-tomcat-7.0.72.tar-C /opt
-    $ ln -sv /opt/tomcat-7.0.72/ /opt/tomcat7
+    $ tar xf apache-tomcat-7.0.72.tar.gz -C /opt
+    $ ln -sv /opt/apache-tomcat-7.0.72/ /opt/tomcat7
 
 3.2 整理文件::
 
     $ rm -f /opt/tomcat7/{LICENSE,NOTICE,RELEASE-NOTES,RUNNING.txt}
+    $ rm -f /opt/tomcat7/bin/*.bat
     $ rm -rf /opt/tomcat7/{logs,temp,webapps,work}
     $ mv /opt/tomcat7/{conf,conf.default}
 
 3.3 创建所需目录::
 
-    $ mkdir /data/tomcat/.catalina-base{conf,webapps,logs,work,temp,data,local}
+    $ mkdir -pv /data/tomcat/.catalina-base/{conf,webapps,logs,work,temp,data,local}
+    $ mkdir -v /data/tomcat/.catalina-base/webapps/ROOT
     $ ln -sv /data/tomcat/.catalina-base/webapps/ /data/tomcat/webapps
     $ ln -sv /data/tomcat/.catalina-base/logs/ /data/tomcat/logs
     $ ln -sv /data/tomcat/.catalina-base/data/ /data/tomcat/data
@@ -108,7 +110,7 @@
 
 3.4 创建所需文件::
     
-   $ cp /opt/tomcat7/conf/* /data/tomcat/.catalina-base/conf
+   $ cp /opt/tomcat7/conf.default/* /data/tomcat/.catalina-base/conf
    $ touch /data/tomcat/.catalina-base/tomcat.sh
    $ echo "Index Successful!" > /data/tomcat/.catalina-base/webapps/ROOT/index.html
 
@@ -129,7 +131,7 @@
 
 .. code-block:: bash
 
-    $ vim /data/zookeeper/conf/zoo.cfg
+    $ vim /data/tomcat/.catalina-base/conf/server.xml
     # 添加如下内容:
     <?xml version='1.0' encoding='utf-8'?>
 
@@ -169,7 +171,7 @@
           </Realm>
     
           <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
-            <Context path="" docBase="webapps/ROOT"/>
+            <Context path="" docBase="ROOT"/>
             <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
                    prefix="localhost_access_log." suffix=".txt"
                    pattern="%h %l %u %t &quot;%r&quot; %s %b" />
@@ -188,7 +190,7 @@
 
 5.1 启动命令::
     
-    $ cd /opt/tomcat
+    $ cd /opt/tomcat7
     $ CATALINA_BASE=/data/tomcat/.catalina-base \ 
       CATALINA_PID=/data/tomcat/.catalina-base/run \
       bin/catalina.sh start

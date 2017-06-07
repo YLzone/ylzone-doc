@@ -12,32 +12,37 @@
     系统内核: Linux version 2.6.32-431.el6.x86_64
     操作用户: root
     运行用户: zookep
+    依赖说明: jdk1.8
     软件版本: zookeeper-3.4.9
-    部署位置: /opt/zookeeper
-    配置目录: /data/zookeeper/conf
-    数据目录: /data/zookeeper/data
-    日志目录: /data/zookeeperlogs
-    PID 目录: /data/zookeeper/run
     所需文件: zookeeper-3.4.9.tar.gz
+
+1.2 节点说明::
+
+    192.168.182.101    VM01    zookeeper-server
+    192.168.182.102    VM02    zookeeper-server
+    192.168.182.103    VM03    zookeeper-server
+
+1.3 目录说明::
     
-1.2 安全级别::
+    部署位置: /opt/zookeeper
+    配置目录: /data/zookeeper/.zookeeper-base/conf
+    数据目录: /data/zookeeper/.zookepper-base/data
+    日志目录: /data/zookeeper/.zookeeper-base/logs
+    PID 目录: /data/zookeeper/.zookeeper-base/run
+    
+1.4 安全级别::
 
     权限级别: 高
     数据安全: 中
 
-1.3 分布说明::
 
-    192.168.182.101    VM01    zookeeper
-    192.168.182.102    VM02    zookeeper
-    192.168.182.103    VM03    zookeeper
-
-1.4 端口介绍::
+1.5 端口介绍::
 
     2181: 表示和客户端通信的接口
     2888: 表示集群间交换信息的端口；
     3888: 表示集群选取"Ladaer"的通信端口。
 
-1.5 操作命令::
+1.6 操作命令::
 
     zookeeper-server
     zookeeper-client
@@ -85,26 +90,28 @@
     $ tar xf zookeeper-3.4.9.tar.gz -C /opt
     $ ln -sv /opt/zookeeper-3.4.9/ /opt/zookeeper
 
-3.2 创建所需目录 ``所有节点``::
+3.2 整理文件 ``所有节点``::
+    
+    $ rm -f /opt/zookeeper/zookeeper-3.4.9.jar.{asc,md5,sha1}
+    $ rm -f /opt/zookeeper/bin/{README.txt,*.cmd}
+    $ rm -rf /opt/zookeeper/lib/{*.txt,cobertura,jdiff}
+    $ rm -rf /opt/zookeeper/{recipes,src,docs,contrib,dist-maven,*.txt,*.xml}
+    $ mv /opt/zookeeper/conf /opt/zookeeper/conf.default
+
+3.3 创建所需目录 ``所有节点``::
 
     $ mkdir -p /data/zookeeper/.zookeeper-base && cd /data/zookeeper/.zookeeper-base
     $ mkdir conf data logs run
 
-3.3 创建所需文件 ``所有节点``::
+3.4 创建所需文件 ``所有节点``::
 
-    $ cp /opt/zookeeper/conf/* /data/zookeeper/conf
-    $ mv /opt/zookeeper/conf /opt/zookeeper/conf.default
-    $ ln -sv /data/zookeeper/conf/ /opt/zookeeper/conf
+    $ cp /opt/zookeeper/conf.default/* /data/zookeeper/conf
     $ cd /data/zookeeper/.zookeeper-base && touch conf/zoo.cfg data/myid
 
-3.4 删除多余文件 ``所有节点``::
-    
-    $ rm -rf /opt/zookeeper/{recipes,src,docs}
-    $ rm -f /opt/zookeeper/zookeeper-3.4.9.jar.{asc,md5,sha1}
-    $ rm -f /opt/zookeeper/bin/{README.txt,*.cmd}
 
 3.5 修改文件权限 ``所有节点``::
 
+    $ chown -R root:root /opt/zookepper
     $ chown -R zookep:zookep /data/zookeeper/.zookeeper-base
     $ chown -R root:root /data/zookeeper/.zookeeper-base/conf
     $ chown root:root /data/zookeeper
@@ -152,7 +159,7 @@
 
 5.2 规范启动 ``所有节点``::
 
-    $ cd /data/kafka && bin/zkServer.sh start
+    $ 
 
 5.3 验证部署 ``所有节点``: 
 

@@ -13,31 +13,32 @@
     部署类型: tar
     操作用户: root
     运行用户: tomcat
-    软件版本: zookeeper-3.4.9
-    部署位置: /opt/zookeeper
-    配置目录: /data/zookeeper/conf
-    数据目录: /data/zookeeper/data
-    日志目录: /data/zookeeperlogs
-    PID 目录: /data/zookeeper/run
+    软件版本: tomcat-7.0.72
     所需文件: apache-tomcat-7.0.72.tar
+
+1.2 节点说明::
+
+    192.168.182.101    VM01    tomcat
+
+1.3 目录说明::
+
+    部署位置: /opt/tomcat7
+    配置目录: /data/tomcat/.catalina-base/conf
+    数据目录: /data/tomcat/.catalina-base/data
+    日志目录: /data/tomcat/.catalina-base/logs
+    PID 目录: /data/tomcat/.catalina-base/run
     
-1.2 安全级别::
+1.4 安全级别::
 
     权限级别: 高
-    数据安全: 中
 
-1.3 分布说明::
+1.5 端口说明::
 
-    192.168.182.101    VM01    zookeeper
+    8080: 提供http服务的端口。
 
-1.4 端口介绍::
+1.6 操作命令::
 
-    2181: 表示和客户端通信的接口
-
-1.5 操作命令::
-
-    zookeeper-server
-    zookeeper-client
+    tomcat: 服务启动及操作脚本。
 
 ..
    1.2 相关地址::
@@ -57,8 +58,13 @@
 
 2.2 创建运行用户::
 
-    $ useradd -M -s /sbin/nologin -u 2181 zookep
+    $ useradd -M -s /sbin/nologin -u 8080 tomcat
 
+.. note::
+
+    便于管理可以根据项目建立相关用户
+    
+    
 2.3 创建所需目录::
 
     $ mkdir -p /data/zookeeper && cd /data/zookeeper
@@ -83,29 +89,38 @@
 3.1 解压软件包::
 
     $ cd /tmp
-    $ tar xf zookeeper-3.4.9.tar.gz -C /opt
-    $ ln -sv /opt/zookeeper-3.4.9/ /opt/zookeeper
+    $ tar xf apache-tomcat-7.0.72.tar-C /opt
+    $ ln -sv /opt/tomcat-7.0.72/ /opt/tomcat7
 
-3.2 创建所需文件::
+3.2 整理文件::
 
-    $ cp /opt/zookeeper/conf/* /data/zookeeper/conf
-    $ mv /opt/zookeeper/conf /opt/zookeeper/conf.default
-    $ ln -sv /data/zookeeper/conf/ /opt/zookeeper/conf
-    $ touch /data/zookeeper/conf/zoo.cfg
-    $ touch /data/zookeeper/data/myid
+    $ rm -f /opt/tomcat7/{LICENSE,NOTICE,RELEASE-NOTES,RUNNING.txt}
+    $ rm -rf /opt/tomcat7/{logs,temp,webapps,work}
+    $ mv /opt/tomcat7/{conf,conf.default}
 
-3.3 删除多余文件::
+3.3 创建所需目录::
+
+    $ mkdir /data/tomcat/.catalina-base{conf,webapps,logs,work,temp,data,local}
+    $ ln -sv /data/tomcat/.catalina-base/webapps/ /data/tomcat/webapps
+    $ ln -sv /data/tomcat/.catalina-base/logs/ /data/tomcat/logs
+    $ ln -sv /data/tomcat/.catalina-base/data/ /data/tomcat/data
+    $ ln -sv /data/tomcat/.catalina-base/local/ /data/tomcat/local
+
+3.4 创建所需文件::
     
-    $ rm -rf /opt/zookeeper/{recipes,src,docs}
-    $ rm -f /opt/zookeeper/zookeeper-3.4.9.jar.{asc,md5,sha1}
-    $ rm -f /opt/zookeeper/bin/{README.txt,*.cmd}
+   $ cp /opt/tomcat7/conf/* /data/tomcat/.catalina-base/conf
+   $ touch /data/tomcat/.catalina-base/tomcat.sh
+   $ echo "Index Successful!" > /data/tomcat/.catalina-base/webapps/ROOT/index.html
 
-3.4 修改文件权限::
+3.5 修改文件权限::
 
-    $ chown -R zookep:zookep /data/zookeeper
-    $ chown -R root:root /data/zookeeper/conf
-    $ chown root:root /data/zookeeper
+    $ chown -R tomcat:tomcat /opt/tomcat7
+    $ chown -R tomcat:tomcat /data/tomcat/.catalina-base
+    $ chown -R root:root /data/tomcat/.catalina-base/conf
 
+.. note::
+
+    为了便于管理和安全考虑，权限用户可分为 ``部署用户`` ``配置用户`` ``运行用户`` 三类。
 
 4 修改配置
 ----------
@@ -116,23 +131,67 @@
 
     $ vim /data/zookeeper/conf/zoo.cfg
     # 添加如下内容:
-    tickTime=2000
-    initLimit=10
-    syncLimit=5
-    dataDir=/data/zookeeper/data 
-    dataLogDir=/data/zookeeper/data
+    <?xml version='1.0' encoding='utf-8'?>
 
-    autopurge.purgeInterval=24
-    autopurge.snapRetainCount=500
+    <Server port="-1" shutdown="SHUTDOWN">
+      <Listener className="org.apache.catalina.startup.VersionLoggerListener" />
+      <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on" />
+      <Listener className="org.apache.catalina.core.JasperListener" />
+      <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener" />
+      <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener" />
+      <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener" />
+    
+      <GlobalNamingResources>
+        <Resource name="UserDatabase" auth="Container"
+                  type="org.apache.catalina.UserDatabase"
+                  description="User database that can be updated and saved"
+                  factory="org.apache.catalina.users.MemoryUserDatabaseFactory"
+                  pathname="conf/tomcat-users.xml" />
+      </GlobalNamingResources>
+    
+      <Service name="Catalina">
+    
+                 <!-- acceptCount="2000" -->
+        <Connector port="8080" protocol="HTTP/1.1"
+                   acceptCount="1024"
+                   minSpareThreads="50"
+                   maxThreads="1020"
+                   connectionTimeout="20000"
+                   redirectPort="8443"
+                   enableLookups="false"
+                   useBodyEncodingForURI="true"
+                   URIEncoding="UTF-8" />
+    
+        <Engine name="Catalina" defaultHost="localhost">
+          <Realm className="org.apache.catalina.realm.LockOutRealm">
+            <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+                   resourceName="UserDatabase"/>
+          </Realm>
+    
+          <Host name="localhost"  appBase="webapps" unpackWARs="true" autoDeploy="true">
+            <Context path="" docBase="webapps/ROOT"/>
+            <Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+                   prefix="localhost_access_log." suffix=".txt"
+                   pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+    
+          </Host>
+        </Engine>
+      </Service>
+    </Server>
 
-    clientPort=2181
+4.2 修改日志配置::
+
+    $ sed -i '/^handlers =/ s/^/#/' /data/tomcat/.catalina-base/conf/logging.properties
 
 5 启动程序
 ----------
 
 5.1 启动命令::
     
-    $ cd /opt/zookeeper && bin/zkServer.sh start
+    $ cd /opt/tomcat
+    $ CATALINA_BASE=/data/tomcat/.catalina-base \ 
+      CATALINA_PID=/data/tomcat/.catalina-base/run \
+      bin/catalina.sh start
 
 5.2 规范启动::
 
@@ -144,28 +203,8 @@
 
 .. code-block:: bash
     
-    $ /usr/local/zookeeper-3.4.6/bin/zkServer.sh status
-    ZooKeeper JMX enabled by default
-    Using config: /opt/zookeeper/bin/../conf/zoo.cfg
-    Mode: standalone
-
-方法二:
-
-.. code-block:: bash
-
-    $ echo stat | nc VM01 2181
-    Zookeeper version: 3.4.9-1757313, built on 08/23/2016 06:50 GMT
-    Clients:
-     /192.168.182.101:38558[0](queued=0,recved=1,sent=0)
-
-    Latency min/avg/max: 0/0/0
-    Received: 2
-    Sent: 1
-    Connections: 1
-    Outstanding: 0
-    Zxid: 0x0
-    Mode: standalone
-    Node count: 4
+    $ curl http://127.0.0.1:8080
+    Index Successful!
 
 6 规范环境
 ----------
@@ -193,31 +232,3 @@
 ``dataDir``::
 
     这个目录为 Zookeeper 保存数据的目录用于保存myid和内存快照，默认情况下 Zookeeper 将写数据的事务日志文件也保存在这个目录里。
-
-``dataLogDir``::
-
-    事务日志目录，类似mysqlbinlog日志、redis的aof日志。
-
-``autopurge.purgeInterval``::
-
-    这个参数指定了清理频率，单位是小时，需要填写一个1或更大的整数，默认是0，表示不开启自己清理功能。
-
-``autopurge.snapRetainCount``::
-
-    这个参数和上面的参数搭配使用，这个参数指定了需要保留的文件数目。默认是保留3个。
-
-``tickTime``::
-
-	这个时间是作为 Zookeeper 服务器之间或客户端与服务器之间维持心跳的时间间隔，也就是每个 tickTime 时间就会发送一个心跳。
-    
-``clientPort``::
-
-	这个端口就是客户端连接 Zookeeper 服务器的端口，Zookeeper 会监听这个端口，接受客户端的访问请求。
-    
-``initLimit``::
-
-	这个配置项是用来配置 Zookeeper 接受客户端（这里所说的客户端不是用户连接 Zookeeper 服务器的客户端，而是 Zookeeper 服务器集群中连接到 Leader 的 Follower 服务器）初始化连接时最长能忍受多少个心跳时间间隔数。当已经超过 10 个心跳的时间（也就是 tickTime）长度后 Zookeeper 服务器还没有收到客户端的返回信息，那么表明这个客户端连接失败。总的时间长度就是 10*2000=20 秒
-
-``syncLimit``::
- 
- 	这个配置项标识 Leader 与 Follower 之间发送消息，请求和应答时间长度，最长不能超过多少个 tickTime 的时间长度，总的时间长度就是 5*2000=10 秒

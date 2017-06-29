@@ -19,6 +19,7 @@ Welcome to ylzone's documentation!
    docs/Zookeeper/zk_pool.rst
    docs/Kafka/kafka_pool.rst
    docs/Tomcat/tomcat_pool.rst
+   docs/Nexus/nexus_pool.rst
 
 
 Indices and tables

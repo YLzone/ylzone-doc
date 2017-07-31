@@ -20,6 +20,7 @@ Welcome to ylzone's documentation!
    docs/Kafka/kafka_pool.rst
    docs/Tomcat/tomcat_pool.rst
    docs/Nexus/nexus_pool.rst
+   docs/Hadoop/hadoop_pool.rst
 
 
 Indices and tables

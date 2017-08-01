@@ -43,6 +43,9 @@
     临时目录: /data/hadoop/hdfs/vars/tmp
     PID 目录: /data/hadoop/hdfs/vars/run
 
+依赖说明::
+
+
 0.4 端口说明::
 
     8020:  namenode 监听的端口，HDFS的入口。
@@ -92,7 +95,53 @@
 
     $ useradd -M -s /sbin/nologin -u 60010  hbase
 
-1.3 配置时间同步:
+1.3 配置时间同步::
+
+    $ crontab -e
+    # 每两小时 Linux 系统就会自动的进行网络时间校准
+    00 */2 * * * root /usr/sbin/ntpdate cn.pool.ntp.org
+
+1.4 修改资源限制:
+
+.. code-block:: bash
+
+    $ vim /etc/security/limits.d/90-nofile.conf
+    # 添加如下内容:
+    hbase          soft    nofile     65535
+    hbase          hard    nofile     65535
+
+    $ vim /etc/security/limits.d/90-nproc.conf
+    # 添加如下内容:
+    hbase          soft    nproc     unlimited
+    hbase          hard    nproc     unlimited
+
+1.5 HDFS相关操作:
+
+修改HDFS相关配置:
+
+.. code-block:: bash
+
+    $ vim /data/hadoop/conf/hdfs-site.xml
+    # 添加如下信息:
+    <property>
+        <name>dfs.datanode.max.transfer.threads</name>
+        <value>4096</value>
+    </property>
+
+    <property>
+        <name>dfs.datanode.max.xcievers</name>
+        <value>4096</value>
+    </property>
+
+.. warning:: 
+
+    修改完HDFS参数后，需要重启HDFS集群，否则参数不生效。
+
+在HDFS中创建所需目录::
+
+    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -mkdir /hbase"
+    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -chown hbase:hbase /hbase"
+    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -ls /"
 
 
 
@@ -103,15 +152,15 @@
 
     $ cd /tmp
     $ tar xf hbase-1.2.6-bin.tar.gz -C /opt
-    $ mv /opt/hbase-1.2.6/ /opt/hbase
+    $ mv /opt/hbase-1.2.6 /opt/hbase
     $ echo "version: hbase-1.2.6" >> /opt/hbase/VERSION.md
 
 2.2 整理程序目录::
 
     $ mv /opt/hbase/conf /opt/hbase/conf.orig
-    $ rm -rfv /opt/hbase/{*.txt,LEGAL,docs}
     $ rm -fv /opt/hbase/bin/*.cmd
     $ rm -fv /opt/hbase/conf.orig/*.cmd
+    $ rm -rfv /opt/hbase/{*.txt,LEGAL,docs}
 
 2.3 创建所需目录::
 
@@ -139,24 +188,7 @@
 
     如果后续准备使用 supervisor 启动，则不要执行 ``2.6步骤``。
 
-2.7 修改HDFS配置参数:
 
-    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -mkdir /hbase"
-    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -chown hbase:hbase /hbase"
-    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -ls /"
-
-.. code-block:: bash
-
-    # conf/hdfs-site.xml
-    <property>
-        <name>dfs.datanode.max.transfer.threads</name>
-        <value>4096</value>
-    </property>
-
-    <property>
-        <name>dfs.datanode.max.xcievers</name>
-        <value>4096</value>
-    </property>
 
 
 三、修改配置
@@ -199,7 +231,7 @@
     
 .. code-block:: bash
     
-    $ vim /data/hbase/conf/
+    $ vim /opt/hbase/bin/hbase-config.sh
     # 第25行加入如下内容
     HBASE_CONF_DIR="/data/hbase/conf"
     

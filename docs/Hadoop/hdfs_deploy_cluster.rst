@@ -2,6 +2,7 @@
 [部署]-集群部署HDFS
 ===================
 
+
 零、背景介绍
 ------------
 
@@ -37,11 +38,11 @@
 0.3 目录说明::
 
     程序目录: /opt/hadoop
-    配置目录: 
-    数据目录: /data/hadoop/hdfs/{name,data,namesecondary}
-    日志目录: /data/hadoop/hdfs/logs
-    临时目录: /data/hadoop/hdfs/vars/tmp
-    PID 目录: /data/hadoop/hdfs/vars/run
+    配置目录: /data/hadoop/conf
+    数据目录: /data/hadoop/data/hdfs/{name,data,namesecondary}
+    日志目录: /data/hadoop/logs
+    临时目录: /data/hadoop/vars/tmp
+    PID 目录: /data/hadoop/vars/run
 
 0.4 端口说明::
 
@@ -51,6 +52,8 @@
 0.5 补充说明::
 
     执行步骤前请查看此步骤下方提示，如遇到红色提示要慎重操作此步骤可能影响正常进入，蓝色为说明提示。
+
+
 
 一、解决依赖
 ------------
@@ -104,9 +107,9 @@
 
 2.3 创建所需目录::
 
-    $ mkdir -pv /data/hadoop/hdfs/{conf,data,logs,vars}
-    $ mkdir -pv /data/hadoop/hdfs/data/{name,namesecondary,data}
-    $ mkdir -pv /data/hadoop/hdfs/vars/run
+    $ mkdir -pv /data/hadoop/{conf,data,logs,vars}
+    $ mkdir -pv /data/hadoop/data/hdfs/{name,namesecondary,data}
+    $ mkdir -pv /data/hadoop/vars/run
 
 2.4 创建所需文件::
 
@@ -240,14 +243,14 @@
     
 .. code-block:: bash
     
-    $ vim /data/hbase/conf/
-    # 第25行加入如下内容
-    HBASE_CONF_DIR="/data/hbase/conf"
+    $ /opt/hadoop/libexec/hdfs-config.sh
+    # 第20行加入如下内容
+    HADOOP_CONF_DIR=/data/hadoop/conf
 
 3.3 修改日志、PID目录:
 
-    echo "export HADOOP_LOG_DIR=/data/hadoop/hdfs/logs" >> /data/hadoop/hdfs/conf/hadoop-env.sh
-    echo "export HADOOP_PID_DIR=/data/hadoop/hdfs/vars/run" >> /data/hadoop/hdfs/conf/hadoop-env.sh
+    echo "export HADOOP_LOG_DIR=/data/hadoop/logs" >> /data/hadoop/conf/hadoop-env.sh
+    echo "export HADOOP_PID_DIR=/data/hadoop/vars/run" >> /data/hadoop/conf/hadoop-env.sh
 
 四、启动程序
 ------------
@@ -267,6 +270,10 @@
     # SecondaryNamenode 启动:
     $ cd /opt/hadoop/sbin
     $ su hdfs -s /bin/bash -c "./hadoop-daemon.sh --config /data/hadoop/hdfs/conf start secondarynamenode"
+
+.. note::
+
+    运行是可以用参数 ``--config`` 指定配置目录，如果不指定则使用 ``3.2步骤`` 所配置的目录。
 
 SysV启动脚本::
 

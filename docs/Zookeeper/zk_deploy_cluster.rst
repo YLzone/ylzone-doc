@@ -3,11 +3,11 @@
 ========================
 
 
-1 背景介绍
-----------
+零、背景介绍
+------------
 
-1.1 部署说明::
-    
+0.1 部署说明::
+
     操作系统: Centos 6.5
     系统内核: Linux version 2.6.32-431.el6.x86_64
     操作用户: root
@@ -16,58 +16,66 @@
     软件版本: zookeeper-3.4.9
     所需文件: zookeeper-3.4.9.tar.gz
 
-1.2 节点说明::
+0.2 节点说明:
 
-    192.168.182.101    VM01    zookeeper-server
-    192.168.182.102    VM02    zookeeper-server
-    192.168.182.103    VM03    zookeeper-server
+.. list-table::
+  :widths: 10 10 30
+  :header-rows: 1
 
-1.3 目录说明::
+  * - Hostname
+    - Address
+    - Role
+  * - VM01
+    - 192.168.182.101
+    - zookeeper-server
+  * - VM02
+    - 192.168.182.102
+    - zookeeper-server
+  * - VM03
+    - 192.168.182.103
+    - zookeeper-server
+
+0.3 目录说明::
     
     部署位置: /opt/zookeeper
-    配置目录: /data/zookeeper/.zookeeper-base/conf
-    数据目录: /data/zookeeper/.zookepper-base/data
-    日志目录: /data/zookeeper/.zookeeper-base/logs
-    PID 目录: /data/zookeeper/.zookeeper-base/run
+    配置目录: /data/zookeeper/conf
+    数据目录: /data/zookeeper/data
+    日志目录: /data/zookeeper/logs
+    PID 目录: /data/zookeeper/vars/run
     
-1.4 安全级别::
-
-    权限级别: 高
-    数据安全: 中
-
-
-1.5 端口介绍::
+0.4 端口介绍::
 
     2181: 表示和客户端通信的接口
     2888: 表示集群间交换信息的端口；
     3888: 表示集群选取"Ladaer"的通信端口。
 
-1.6 操作命令::
+0.5 补充说明::
 
-    zookeeper-server
-    zookeeper-client
-
-..
-   1.2 相关地址::
-    下载地址
-    ---
-    智能安装: 
-   1.3 关键命令::
-    mysql mysqldump
+    执行步骤前请查看此步骤下方提示，如遇到红色提示要慎重操作此步骤可能影响正常进>入，蓝色为说明提示。
 
 
-2 解决依赖
+
+一、解决依赖
 ----------
 
-2.1 安装依赖组件 ``所有节点``::
+1.1 安装依赖组件 ``所有节点``::
 
-    $ yum install jdk-8u60-linux-x64.rpm
+安装jdk::
 
-2.2 创建运行用户 ``所有节点``::
+    $ mkdir /usr/java
+    $ tar xf jdk-8u60-linux-x64.gz -C /usr/java
+    $ ln -sv /usr/java/jdk1.8.0_60 /usr/java/latest
+    $ ln -sv /usr/java/latest /usr/java/default
+    $ chown -R root:root /usr/java/jdk1.8.0_60
+    $ echo 'export JAVA_HOME=/usr/java/default' > /etc/profile.d/java.sh
+    $ echo 'export PATH=${PATH}:${JAVA_HOME}/bin' >> /etc/profile.d/java.sh
+    $ source /etc/profile.d/java.sh
 
-    $ useradd -M -s /sbin/nologin -u 2181 zookep
+1.2 创建运行用户 ``所有节点``::
 
-2.3 修改hosts文件 ``所有节点``:
+    $ useradd -s /sbin/nologin -u 2181 zookep
+
+1.3 修改hosts文件 ``所有节点``:
 
 .. code-block:: bash
 
@@ -81,62 +89,59 @@
 
     如果你使用了内部DNS服务器则不需要修改此文件，否则请按照操作实行。
 
-3 安装程序
+二、安装程序
 ----------
 
-3.1 解压软件包 ``所有节点``::
+2.1 解压软件包 ``所有节点``::
 
     $ cd /tmp
     $ tar xf zookeeper-3.4.9.tar.gz -C /opt
-    $ ln -sv /opt/zookeeper-3.4.9/ /opt/zookeeper
+    $ mv /opt/zookeeper-3.4.9 /opt/zookeeper
+    $ echo "version: zookeeper-3.4.9" >> /opt/zookeeper/VERSION.md
 
-3.2 整理文件 ``所有节点``::
+2.2 整理程序目录 ``所有节点``::
     
-    $ rm -f /opt/zookeeper/zookeeper-3.4.9.jar.{asc,md5,sha1}
-    $ rm -f /opt/zookeeper/bin/{README.txt,*.cmd}
-    $ rm -rf /opt/zookeeper/lib/{*.txt,cobertura,jdiff}
-    $ rm -rf /opt/zookeeper/{recipes,src,docs,contrib,dist-maven,*.txt,*.xml}
-    $ mv /opt/zookeeper/conf /opt/zookeeper/conf.default
+    $ mv /opt/zookeeper/conf /opt/zookeeper/conf.orig
+    $ rm -fv /opt/zookeeper/zookeeper-3.4.9.jar.{asc,md5,sha1}
+    $ rm -fv /opt/zookeeper/bin/{README.txt,*.cmd}
+    $ rm -rfv /opt/zookeeper/lib/{*.txt,cobertura,jdiff}
+    $ rm -rfv /opt/zookeeper/{recipes,src,docs,contrib,dist-maven,*.txt,*.xml}
 
-3.3 创建所需目录 ``所有节点``::
+2.3 创建所需目录 ``所有节点``::
 
-    $ mkdir -p /data/zookeeper/.zookeeper-base && cd /data/zookeeper/.zookeeper-base
-    $ mkdir conf data logs run
+    $ mkdir -p /data/zookeeper/{conf,data,logs,vars}
+    $ mkdir -p /data/zookeeper/vars/{run,tmp}
 
-3.4 创建所需文件 ``所有节点``::
+2.4 创建所需文件 ``所有节点``::
 
-    $ cp /opt/zookeeper/conf.default/* /data/zookeeper/conf
-    $ cd /data/zookeeper/.zookeeper-base && touch conf/zoo.cfg data/myid
+    $ cp /opt/zookeeper/conf.orig/* /data/zookeeper/conf
+    $ touch /data/zookeeper/{data/myid,conf/zoo.cfg,conf/zookeeper-env.sh}
 
+2.5 修改文件权限 ``所有节点``::
 
-3.5 修改文件权限 ``所有节点``::
+    $ chown -R root:root /opt/zookeeper
+    $ chown -R zookep:zookep /data/zookeeper
 
-    $ chown -R root:root /opt/zookepper
-    $ chown -R zookep:zookep /data/zookeeper/.zookeeper-base
-    $ chown -R root:root /data/zookeeper/.zookeeper-base/conf
-    $ chown root:root /data/zookeeper
-
-
-4 修改配置
+三、修改配置
 ----------
 
-4.1 生成myid文件 ``所有节点``::
+3.1 生成myid文件 ``所有节点``::
 
-    $ echo 1 > /data/zookeeper/.zookeeper-base/data/myid    # VM01上操作
-    $ echo 2 > /data/zookeeper/.zookeeper-base/data/myid    # VM02上操作
-    $ echo 3 > /data/zookeeper/.zookeeper-base/data/myid    # VM03上操作
+    $ echo 1 > /data/zookeeper/data/myid    # VM01上操作
+    $ echo 2 > /data/zookeeper/data/myid    # VM02上操作
+    $ echo 3 > /data/zookeeper/data/myid    # VM03上操作
 
-4.2 编辑配置文件 ``所有节点``:
+3.2 编辑配置文件 ``所有节点``:
 
 .. code-block:: bash
 
-    $ vim /data/zookeeper/.zookeeper-base/conf/zoo.cfg
+    $ vim /data/zookeeper/conf/zoo.cfg
     # 添加如下内容:
     tickTime=2000
     initLimit=10
     syncLimit=5
-    dataDir=/data/zookeeper/.zookeeper-base/data 
-    dataLogDir=/data/zookeeper.zookeeper-base/data
+    dataDir=/data/zookeeper/data 
+    dataLogDir=/data/zookeeper/data
 
     autopurge.purgeInterval=24
     autopurge.snapRetainCount=500
@@ -146,22 +151,48 @@
     server.2=VM02:2888:3888
     server.3=VM03:2888:3888
 
+3.2 修改默认配置目录:
+    
+.. code-block:: bash
 
-5 启动程序
+    $ vim /opt/zookeeper/bin/zkEnv.sh
+    # 第25行加入如下内容
+    ZOOCFGDIR=/data/zookeeper/conf
+
+3.3 修改日志、PID目录:
+
+.. code-block:: bash
+
+    $ vim /data/zookeeper/conf/zookeeper-env.sh
+    # 替换如下内容
+    export JAVA_HOME=${JAVA_HOME}
+    export ZOO_LOG_DIR=/data/zookeeper/logs
+    export ZOOPIDFILE=/data/zookeeper/vars/run
+
+四、启动程序
 ----------
 
-5.1 启动命令 ``所有节点``::
+4.1 启动应用程序 ``所有节点``::
     
+二进制启动::
+
     $ cd /opt/zookeeper
-    $ ZOOCFGDIR=/data/zookeeper/.zookeeper-base/conf \
-      ZOO_LOG_DIR=/data/zookeeper/.zookeeper-base/logs \
+    $ ZOOCFGDIR=/data/zookeeper/conf \
+      ZOO_LOG_DIR=/data/zookeeper/logs \
       bin/zkServer.sh start
 
-5.2 规范启动 ``所有节点``::
+SysV启动脚本::
 
     $ 
 
-5.3 验证部署 ``所有节点``: 
+supervisor启动配置:
+
+
+.. note::
+    
+    选择一种启动方式即可，一般使用SysV启动脚本启动即可。
+
+4.2 检测启动状态 ``所有节点``::
 
 方法一:
 

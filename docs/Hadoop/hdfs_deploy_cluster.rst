@@ -61,6 +61,7 @@
     2. 检测主机名对应关系
     3. 时间检测，检查时间是否同步，配置NTP
     4. 存储空间检测，检查空间是否满足要求
+    5. 文件、进程打开数
 
 1.1 安装依赖组件:
 
@@ -90,7 +91,7 @@
     $ cd /tmp
     $ tar xf hadoop-2.7.3.tar.gz -C /opt
     $ mv /opt/hadoop-2.7.3/ /opt/hadoop
-    $ echo "version: hadoop-2.7.3" >> /opt/hadoop/README.md
+    $ echo "version: hadoop-2.7.3" >> /opt/hadoop/VERSION.md
 
 2.2 整理程序目录::
 
@@ -113,18 +114,19 @@
 
 2.5 修改文件权限::
 
-    $ chown -R hdfs:hdfs /data/hadoop/dfs
+    $ chown -R root:root /opt/hadoop
+    $ chown -R hdfs:hdfs /data/hadoop/hdfs
     
-2.6 修改环境变量:
+2.6 初始化NameNode数据::
 
-.. code-block:: bash
+    $ /opt/hadoop/bin
+    $ su -s /bin/bash hdfs -c "hdfs --config /data/hadoop/hdfs/conf namenode -format"
 
-    $ vim /etc/profile.d/hadoop.sh
-    # 添加如下内容:
-    PATH=$PATH:/opt/hadoop/bin
-    export PATH
+2.7 修改环境变量::
 
-    $ source /etc/profile.d/hadoop.sh    # 执行此命令使如上配置生效
+    $ echo "PATH=$PATH:/opt/hadoop/bin" > /etc/profile.d/hadoop.sh
+    $ echo "export PATH" >> /etc/profile.d/hadoop.sh
+    $ source /etc/profile.d/hadoop.sh                # 执行此命令使如上配置生效
 
 ..
     环境变量配置修改成命令行方式
@@ -234,21 +236,18 @@
 
     </configuration>
 
-3.2 配置日志目录:
+3.2 修改默认配置目录:
+    
+.. code-block:: bash
+    
+    $ vim /data/hbase/conf/
+    # 第25行加入如下内容
+    HBASE_CONF_DIR="/data/hbase/conf"
 
-.. code-block:: xml
+3.3 修改日志、PID目录:
 
-    $ vim /data/hadoop/hdfs/conf/hadoop-env.sh
-    # 追加如下内容:
-    export HADOOP_LOG_DIR=/data/hadoop/hdfs/logs
-
-3.3 配置PID目录:
-
-.. code-block:: xml
-
-    $ vim /data/hadoop/hdfs/conf/hadoop-env.sh
-    # 追加如下内容:
-    export HADOOP_PID_DIR=/data/hadoop/hdfs/vars/run
+    echo "export HADOOP_LOG_DIR=/data/hadoop/hdfs/logs" >> /data/hadoop/hdfs/conf/hadoop-env.sh
+    echo "export HADOOP_PID_DIR=/data/hadoop/hdfs/vars/run" >> /data/hadoop/hdfs/conf/hadoop-env.sh
 
 四、启动程序
 ------------

@@ -255,7 +255,7 @@
 
 3.4 修改JAVA_HOME环境变量::
 
-    $ echo "export JAVA_HOME=/usr/java/default" >> /data/hadoop/conf/hadoop-env.sh
+    $ echo 'export JAVA_HOME=${JAVA_HOME:-"/usr/java/default"}' >> /data/hadoop/conf/hadoop-env.sh
     
 
 四、启动程序
@@ -325,9 +325,12 @@ supervisor启动配置:
 
     $ su hdfs -s /bin/bash -c "jps -l"
 
-4.3 启动后续操作::
+4.3 启动后续操作:
 
-    # 暂无
+创建HDFS临时目录::
+    
+    $ hdfs dfs -mkdir /tmp
+    $ hdfs dfs -chown -R 1777 /tmp
 
 
 五、附属功能

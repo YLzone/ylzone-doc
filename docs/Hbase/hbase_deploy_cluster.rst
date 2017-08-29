@@ -37,19 +37,21 @@
 0.3 目录说明::
 
     程序目录: /opt/hbase
-    配置目录: 
-    数据目录: /data/hado/
-    日志目录: /data/hadoop/hdfs/logs
-    临时目录: /data/hadoop/hdfs/vars/tmp
-    PID 目录: /data/hadoop/hdfs/vars/run
+    配置目录: /data/hbase/conf
+    数据目录: /data/hbase/data
+    日志目录: /data/hbase/logs
+    临时目录: /data/hbase/vars/tmp
+    PID 目录: /data/hbase/vars/run
 
 依赖说明::
 
 
 0.4 端口说明::
-
-    8020:  namenode 监听的端口，HDFS的入口。
-    50070: namenode 管理页面（Web UI）。 
+    
+    16000:
+    16010:
+    16020:
+    16030:
 
 0.5 补充说明::
 
@@ -98,7 +100,7 @@
 
 1.2 创建运行用户::
 
-    $ useradd -M -s /sbin/nologin -u 60010  hbase
+    $ useradd -s /sbin/nologin -u 60010  hbase
 
 1.3 配置时间同步::
 
@@ -106,6 +108,10 @@
     $ crontab -e
     # 每两小时 Linux 系统就会自动的进行网络时间校准
     00 */2 * * * root /usr/sbin/ntpdate cn.pool.ntp.org
+
+.. note::
+
+    如有需要可以自行搭建NTP服务器，使用内部时间同步。
 
 1.4 修改资源限制:
 
@@ -145,10 +151,13 @@
 
 在HDFS中创建所需目录::
 
-    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -mkdir /hbase"
-    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -chown hbase:hbase /hbase"
-    su hdfs -s /bin/bash -c "hdfs --config /data/hadoop/hdfs/conf  dfs -ls /"
+    su hdfs -s /bin/bash -c "hdfs dfs -mkdir /hbase"
+    su hdfs -s /bin/bash -c "hdfs dfs -chown hbase:hbase /hbase"
+    su hdfs -s /bin/bash -c "hdfs dfs -ls /"
 
+1.6 部署Zookeeper集群::
+
+    按照文档部署zookeeper集群
 
 
 二、安装程序
@@ -186,15 +195,22 @@
 
     $ ln -sv /opt/hbase/bin/hbase /usr/bin
 
-2.6 设置开机启动::
+2.7 设置开机启动:
 
-    12
+.. code-block:: xml
+
+    $ vim /etc/rc.d/rc.local
+
+    ↓↓↓↓↓添加如下内容↓↓↓↓↓
+    # HMaster 开机启动
+    su -s /bin/bash hbase -c "/opt/hbase/bin/hbase-daemon.sh start master"
+
+    # HRegionServer 开机启动
+    su -s /bin/bash hbase -c "/opt/hbase/bin/hbase-daemon.sh start regionserver"
 
 .. warning::
 
-    如果后续准备使用 supervisor 启动，则不要执行 ``2.6步骤``。
-
-
+    注意启动顺序要在zookeeper服务之后。如果后续准备使用 supervisor 启动，则不要执行 ``2.6步骤``。
 
 
 三、修改配置
@@ -204,7 +220,7 @@
 
 .. code-block:: xml
 
-    $ vim /data/hadoop/hdfs/conf/core-site.xml
+    $ vim /data/hbase/conf/hbase-site.xml
     # 替换如下内容:
     <?xml version="1.0" encoding="UTF-8"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -228,7 +244,7 @@
 
       <property>
         <name>hbase.zookeeper.quorum</name>
-        <value>ZOO1,ZOO2,ZOO3:/hbase</value>
+        <value>VM01,VM02,VM03</value>
       </property>
 
     </configuration>
@@ -238,13 +254,17 @@
 .. code-block:: bash
     
     $ vim /opt/hbase/bin/hbase-config.sh
-    # 第25行加入如下内容
+    # 第26行加入如下内容
     HBASE_CONF_DIR="/data/hbase/conf"
     
 3.3 修改日志、PID目录::
 
     echo "export HBASE_LOG_DIR=/data/hbase/logs" >> /data/hbase/conf/hbase-env.sh
     echo "export HBASE_PID_DIR=/data/hbase/vars/run" >> /data/hbase/conf/hbase-env.sh
+
+3.4 修改JAVA_HOME环境变量::
+
+    $ echo 'export JAVA_HOME=${JAVA_HOME:-"/usr/java/default"}' >> /data/hbase/conf/hbase-env.sh
 
 
 四、启动程序
@@ -255,12 +275,10 @@
 二进制启动::
 
     # Master 启动:
-    $ cd /opt/hbase/bin
-    $ su -s /bin/bash hbase -c "./hbase-daemon.sh --config /data/hbase/conf start master"
+    $ su -s /bin/bash hbase -c "/opt/hbase/bin/hbase-daemon.sh --config /data/hbase/conf start master"
 
     # Regionserver 启动:
-    $ cd /opt/hbase/bin
-    $ su -s /bin/bash hbase -c "./hbase-daemon.sh --config /data/hbase/conf start regionserver"
+    $ su -s /bin/bash hbase -c "/opt/hbase/bin/hbase-daemon.sh --config /data/hbase/conf start regionserver"
 
 .. note::
 
@@ -299,47 +317,16 @@ supervisor启动配置:
 
 4.2 检测启动状态::
 
-    $ mysqladmin -h 127.0.0.1 -p 3306 ping
-    mysqld is alive         # 返回此结果运行正常           
+    暂无
 
-4.3 启动后续操作:
+4.3 启动后续操作::
 
-安全初始化root账号::
+    暂无
 
-    $ mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'ylzone' WITH GRANT OPTION"
-    $ mysql -e "DELETE FROM mysql.user WHERE host != '%'"
-    $ mysql -e "FLUSH PRIVILEGES"
-    $ mysql -u root -p ylzone                               # 连接测试
-
-.. note::
-
-    如果上述如步骤均操作正常，则mysql部署完成。酌情把相关地址、账号密码发送给使用者。
 
 五、附属功能
 ------------
 
-5.1 环境规范操作
+5.1 环境规范操作::
 
-添加include支持::
-
-    $ ln -sv /opt/mysql/include /usr/include/mysql
-
-添加lib支持::
-
-    $ echo '/opt/mysql/lib' > /etc/ld.so.conf.d/mysql.conf
-    $ ldconfig                                               # 让系统重新载入系统库
-
-添加man帮助:
-
-.. code-block:: bash
-    
-    $ vim /etc/man.config
-    MANPATH /opt/mysql/man
-    
-.. note::
-
-   ``5.1步骤`` 主要为支持编译等相关操，如无相关需要可忽略此步骤。
-
-..
-   添加管理用户进行对 mysql的管理
-   如：添加admin或super用户，之后在sudoer中加入可操作mysql相关命令
+    暂无

@@ -80,16 +80,21 @@
 
 安装jdk::
 
-    $ mkdir /usr/java
-    $ tar xf jdk-8u60-linux-x64.gz -C /usr/java
+    # 安装软件包
+    $ mkdir -v /usr/java
+    $ tar xvf jdk-8u60-linux-x64.gz -C /usr/java
     $ ln -sv /usr/java/jdk1.8.0_60 /usr/java/latest
     $ ln -sv /usr/java/latest /usr/java/default
     $ chown -R root:root /usr/java/jdk1.8.0_60
     $ echo 'export JAVA_HOME=/usr/java/default' > /etc/profile.d/java.sh
     $ echo 'export PATH=${PATH}:${JAVA_HOME}/bin' >> /etc/profile.d/java.sh
     $ source /etc/profile.d/java.sh
-..
-    检测jdk配置，java -version
+
+    # 验证安装，显示如下内容表示成功。
+    $ java -version
+    java version "1.8.0_60"
+    Java(TM) SE Runtime Environment (build 1.8.0_60-b27)
+    Java HotSpot(TM) 64-Bit Server VM (build 25.60-b23, mixed mode)
 
 1.2 创建运行用户::
 
@@ -97,6 +102,7 @@
 
 1.3 配置时间同步::
 
+    $ ntpdate cn.pool.ntp.org
     $ crontab -e
     # 每两小时 Linux 系统就会自动的进行网络时间校准
     00 */2 * * * root /usr/sbin/ntpdate cn.pool.ntp.org

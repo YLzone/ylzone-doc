@@ -70,16 +70,21 @@
 
 安装jdk::
 
-    $ mkdir /usr/java
-    $ tar xf jdk-8u60-linux-x64.gz -C /usr/java
+    # 安装软件包
+    $ mkdir -v /usr/java
+    $ tar xvf jdk-8u60-linux-x64.gz -C /usr/java
     $ ln -sv /usr/java/jdk1.8.0_60 /usr/java/latest
     $ ln -sv /usr/java/latest /usr/java/default
     $ chown -R root:root /usr/java/jdk1.8.0_60
     $ echo 'export JAVA_HOME=/usr/java/default' > /etc/profile.d/java.sh
     $ echo 'export PATH=${PATH}:${JAVA_HOME}/bin' >> /etc/profile.d/java.sh
     $ source /etc/profile.d/java.sh
-..
-    检测jdk配置，java -version
+
+    # 验证安装，显示如下内容表示成功。
+    $ java -version
+    java version "1.8.0_60"
+    Java(TM) SE Runtime Environment (build 1.8.0_60-b27)
+    Java HotSpot(TM) 64-Bit Server VM (build 25.60-b23, mixed mode)
 
 1.2 创建运行用户::
 
@@ -93,12 +98,13 @@
 
     $ cd /tmp
     $ tar xf hadoop-2.7.3.tar.gz -C /opt
-    $ mv /opt/hadoop-2.7.3/ /opt/hadoop
+    $ mv -v /opt/hadoop-2.7.3/ /opt/hadoop
     $ echo "version: hadoop-2.7.3" >> /opt/hadoop/VERSION.md
 
 2.2 整理程序目录::
 
-    $ mv /opt/hadoop/etc /opt/hadoop/etc.orig
+    $ mv -v /opt/hadoop/etc /opt/hadoop/etc.orig
+    $ rm -fv /opt/hadoop/*.txt
     $ rm -fv /opt/hadoop/bin/*.cmd
     $ rm -fv /opt/hadoop/sbin/*.cmd
     $ rm -fv /opt/hadoop/libexec/*.cmd
@@ -113,37 +119,36 @@
 
 2.4 创建所需文件::
 
-    $ cp /opt/hadoop/etc.orig/hadoop/* /data/hadoop/hdfs/conf
+    $ cp /opt/hadoop/etc.orig/hadoop/* /data/hadoop/conf
 
 2.5 修改文件权限::
 
     $ chown -R root:root /opt/hadoop
-    $ chown -R hdfs:hdfs /data/hadoop/hdfs
+    $ chown -R hdfs:hdfs /data/hadoop/data/hdfs
+    $ chown -R hdfs:hdfs /data/hadoop/{logs,vars}
     
-2.6 初始化NameNode数据::
 
-    $ /opt/hadoop/bin
-    $ su -s /bin/bash hdfs -c "hdfs --config /data/hadoop/hdfs/conf namenode -format"
-
-2.7 修改环境变量::
+2.6 修改环境变量::
 
     $ echo "PATH=$PATH:/opt/hadoop/bin" > /etc/profile.d/hadoop.sh
     $ echo "export PATH" >> /etc/profile.d/hadoop.sh
     $ source /etc/profile.d/hadoop.sh                # 执行此命令使如上配置生效
 
-..
-    环境变量配置修改成命令行方式
+2.7 设置开机启动::
+    
+    # NameNode 开机启动
+    $ sed -i '6i su hdfs -s /bin/bash -c "/opt/hadoop/sbin/hadoop-daemon.sh --config /data/hadoop/conf start namenode"' /etc/rc.d/rc.local
 
-2.6 设置开机启动::
+    # DataNode 开机启动
+    $ sed -i '7i su hdfs -s /bin/bash -c "/opt/hadoop/sbin/hadoop-daemon.sh --config /data/hadoop/conf start datanode"' /etc/rc.d/rc.local
+
+    # SecondaryNamenode 开机启动
+    $ sed -i '8i su hdfs -s /bin/bash -c "/opt/hadoop/sbin/hadoop-daemon.sh --config /data/hadoop/conf start secondarynamenode"' /etc/rc.d/rc.local
 
 .. warning::
 
-    如果后续准备使用 supervisor 启动，则不要执行 ``2.6步骤``。
+    上如三个开机启动，请根据规划参照标注提示的指定节点操作。如果后续准备使用 supervisor 启动，则不要执行 ``2.7步骤``。
 
-2.7 初始化数据库::
-
-    $ cd /opt/mysql
-    $ scripts/mysql_install_db --user=mysql --basedir=/opt/mysql --datadir=/data/mysql/data
 
 三、修改配置
 ------------
@@ -152,7 +157,7 @@
 
 .. code-block:: xml
 
-    $ vim /data/hadoop/hdfs/conf/core-site.xml
+    $ vim /data/hadoop/conf/core-site.xml
     # 替换如下内容:
     <?xml version="1.0" encoding="UTF-8"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -191,7 +196,7 @@
 
 .. code-block:: xml
 
-    $ vim /data/hadoop/hdfs/conf/hdfs-site.xml
+    $ vim /data/hadoop/conf/hdfs-site.xml
     # 替换如下内容:
     <?xml version="1.0" encoding="UTF-8"?>
     <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
@@ -201,7 +206,7 @@
     <!-- namenode 所使用的元数据保存，一般建议在nfs上保留一份，也可以在一台服务器的多块硬盘上使用 -->
     <property>
         <name>dfs.namenode.name.dir</name>
-        <value>file:///data/hadoop/hdfs/data/name</value>
+        <value>file:///data/hadoop/data/hdfs/name</value>
     </property>
 
     <!-- The address and the base port where the dfs namenode web ui will listen on.
@@ -215,7 +220,7 @@
     <!-- secondary namenode 节点存储 checkpoint 文件目录 -->
     <property>
         <name>dfs.namenode.checkpoint.dir</name>
-        <value>file:///data/hadoop/hdfs/data/namesecondary</value>
+        <value>file:///data/hadoop/data/hdfs/namesecondary</value>
     </property>
 
     <!-- ***** 注意此配置为 secondarynamenode 节点配置，就按规划修改此地址 ***** -->
@@ -228,7 +233,7 @@
          把这些位置分散在每个节点上的所有磁盘上可以实现磁盘 I/O 平衡，因此会显著改进磁盘 I/O 性能。-->
     <property>
         <name>dfs.datanode.data.dir</name>
-        <value>file:///data/hadoop/hdfs/data/data</value>
+        <value>file:///data/hadoop/data/hdfs/data</value>
     </property>
 
     <!-- 指定dfs保存数据的副本数量 -->
@@ -239,41 +244,52 @@
 
     </configuration>
 
-3.2 修改默认配置目录:
+3.2 修改默认配置目录::
     
-.. code-block:: bash
+    $ sed -i '20i HADOOP_CONF_DIR=/data/hadoop/conf' /opt/hadoop/libexec/hdfs-config.sh
+
+3.3 修改日志、PID目录::
+
+    $ echo "export HADOOP_LOG_DIR=/data/hadoop/logs" >> /data/hadoop/conf/hadoop-env.sh
+    $ echo "export HADOOP_PID_DIR=/data/hadoop/vars/run" >> /data/hadoop/conf/hadoop-env.sh
+
+3.4 修改JAVA_HOME环境变量::
+
+    $ echo "export JAVA_HOME=/usr/java/default" >> /data/hadoop/conf/hadoop-env.sh
     
-    $ /opt/hadoop/libexec/hdfs-config.sh
-    # 第20行加入如下内容
-    HADOOP_CONF_DIR=/data/hadoop/conf
-
-3.3 修改日志、PID目录:
-
-    echo "export HADOOP_LOG_DIR=/data/hadoop/logs" >> /data/hadoop/conf/hadoop-env.sh
-    echo "export HADOOP_PID_DIR=/data/hadoop/vars/run" >> /data/hadoop/conf/hadoop-env.sh
 
 四、启动程序
 ------------
 
-4.1 启动应用程序:
+4.1 启动之前操作:
+
+初始化NameNode数据::
+
+    $ su -s /bin/bash hdfs -c "hdfs --config /data/hadoop/conf namenode -format"
+
+.. warning::
+
+    此步骤只在 ``NameNode`` 操作，功能为初始化数据。仅在第一次启动之前操作即可，后续启动不要执行此操作。
+
+4.2 启动应用程序:
     
 二进制启动::
 
-    # NameNode 启动:
+    # NameNode 启动
     $ cd /opt/hadoop/sbin
-    $ su hdfs -s /bin/bash -c "./hadoop-daemon.sh --config /data/hadoop/hdfs/conf start namenode"
+    $ su hdfs -s /bin/bash -c "./hadoop-daemon.sh --config /data/hadoop/conf start namenode"
 
-    # DataNode 启动:
+    # DataNode 启动
     $ cd /opt/hadoop/sbin
-    $ su hdfs -s /bin/bash -c "./hadoop-daemon.sh --config /data/hadoop/hdfs/conf start datanode"
+    $ su hdfs -s /bin/bash -c "./hadoop-daemon.sh --config /data/hadoop/conf start datanode"
 
-    # SecondaryNamenode 启动:
+    # SecondaryNamenode 启动
     $ cd /opt/hadoop/sbin
-    $ su hdfs -s /bin/bash -c "./hadoop-daemon.sh --config /data/hadoop/hdfs/conf start secondarynamenode"
-
+    $ su hdfs -s /bin/bash -c "./hadoop-daemon.sh --config /data/hadoop/conf start secondarynamenode"
+    
 .. note::
 
-    运行是可以用参数 ``--config`` 指定配置目录，如果不指定则使用 ``3.2步骤`` 所配置的目录。
+    请根据规划参照标注提示指定节点操作。运行是可以用参数 ``--config`` 指定配置目录，如果不指定则使用 ``3.2步骤`` 所配置的目录。
 
 SysV启动脚本::
 
@@ -286,10 +302,9 @@ SysV启动脚本::
     # SecondaryNamenode 启动:
     $ service secondarynamenode start
 
-.. warning::
+.. note::
 
-    使用SysV脚本启动需要 ``redhat-lsb-core`` 此程序包，请提前安装。
-    安装命令 ``yum install redhat-lsb-core``
+    请根据规划参照标注提示指定节点操作。使用SysV脚本启动需要 ``redhat-lsb-core`` 此程序包，请提前安装。安装命令 ``yum install redhat-lsb-core``
 
 supervisor启动配置:
 
@@ -302,53 +317,22 @@ supervisor启动配置:
     stdout_logfile_maxbytes=100MB
     stdout_logfile_backups=10
 
-.. note::
+.. warning::
     
     选择一种启动方式即可，一般使用SysV启动脚本启动即可。
 
 4.2 检测启动状态::
 
-    $ mysqladmin -h 127.0.0.1 -p 3306 ping
-    mysqld is alive         # 返回此结果运行正常           
+    $ su hdfs -s /bin/bash -c "jps -l"
 
-4.3 启动后续操作:
+4.3 启动后续操作::
 
-安全初始化root账号::
+    # 暂无
 
-    $ mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' IDENTIFIED BY 'ylzone' WITH GRANT OPTION"
-    $ mysql -e "DELETE FROM mysql.user WHERE host != '%'"
-    $ mysql -e "FLUSH PRIVILEGES"
-    $ mysql -u root -p ylzone                               # 连接测试
-
-.. note::
-
-    如果上述如步骤均操作正常，则mysql部署完成。酌情把相关地址、账号密码发送给使用者。
 
 五、附属功能
 ------------
 
-5.1 环境规范操作
+5.1 环境规范操作::
 
-添加include支持::
-
-    $ ln -sv /opt/mysql/include /usr/include/mysql
-
-添加lib支持::
-
-    $ echo '/opt/mysql/lib' > /etc/ld.so.conf.d/mysql.conf
-    $ ldconfig                                               # 让系统重新载入系统库
-
-添加man帮助:
-
-.. code-block:: bash
-    
-    $ vim /etc/man.config
-    MANPATH /opt/mysql/man
-    
-.. note::
-
-   ``5.1步骤`` 主要为支持编译等相关操，如无相关需要可忽略此步骤。
-
-..
-   添加管理用户进行对 mysql的管理
-   如：添加admin或super用户，之后在sudoer中加入可操作mysql相关命令
+    # 暂无

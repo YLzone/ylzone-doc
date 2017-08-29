@@ -51,7 +51,7 @@
 
 0.5 补充说明::
 
-    执行步骤前请查看此步骤下方提示，如遇到红色提示要慎重操作此步骤可能影响正常进>入，蓝色为说明提示。
+    执行步骤前请查看此步骤下方提示，如遇到红色提示要慎重操作此步骤可能影响正确部署，蓝色为说明提示。
 
 
 
@@ -60,7 +60,7 @@
 
 1.1 安装依赖组件 ``所有节点``::
 
-安装jdk::
+安装JDK::
 
     $ mkdir /usr/java
     $ tar xf jdk-8u60-linux-x64.gz -C /usr/java
@@ -87,7 +87,28 @@
     
 .. note::
 
-    如果你使用了内部DNS服务器则不需要修改此文件，否则请按照操作实行。
+    如果你使用了内部DNS服务器则不需要修改此文件，否则请按照如上操作实行。
+
+1.4 配置时间同步 ``所有节点``::
+
+    $ crontab -e
+    # 每两小时 Linux 系统就会自动的进行网络时间校准
+    00 */2 * * * root /usr/sbin/ntpdate cn.pool.ntp.org
+
+1.5 修改资源限制 ``所有节点``:
+
+.. code-block:: bash
+
+    $ vim /etc/security/limits.d/90-nofile.conf
+    # 添加如下内容:
+    zookep          soft    nofile     65535
+    zookep          hard    nofile     65535
+
+    $ vim /etc/security/limits.d/90-nproc.conf
+    # 添加如下内容:
+    zookep          soft    nproc     unlimited
+    zookep          hard    nproc     unlimited
+
 
 二、安装程序
 ----------
@@ -109,8 +130,8 @@
 
 2.3 创建所需目录 ``所有节点``::
 
-    $ mkdir -p /data/zookeeper/{conf,data,logs,vars}
-    $ mkdir -p /data/zookeeper/vars/{run,tmp}
+    $ mkdir -pv /data/zookeeper/{conf,data,logs,vars}
+    $ mkdir -pv /data/zookeeper/vars/{run,tmp}
 
 2.4 创建所需文件 ``所有节点``::
 
@@ -121,6 +142,19 @@
 
     $ chown -R root:root /opt/zookeeper
     $ chown -R zookep:zookep /data/zookeeper
+
+2.6 修改环境变量::
+
+    $ echo "export PATH=$PATH:/opt/zookeeper/bin" > /etc/profile.d/zookeeper.sh
+    $ source /etc/profile.d/zookeeper.sh
+
+2.7 设置开机启动::
+
+    $ sed -i '6i su zookep -s /bin/bash -c "/opt/zookeeper/bin/zkServer.sh start"' /etc/rc.d/rc.local
+
+.. warning::
+
+    如果后续准备使用 supervisor 启动，则不要执行 ``2.7步骤``。
 
 三、修改配置
 ----------
@@ -165,21 +199,18 @@
 
     $ vim /data/zookeeper/conf/zookeeper-env.sh
     # 替换如下内容
-    export JAVA_HOME=${JAVA_HOME}
-    export ZOO_LOG_DIR=/data/zookeeper/logs
-    export ZOOPIDFILE=/data/zookeeper/vars/run
+    export JAVA_HOME=${JAVA_HOME:-"/usr/java/default"}
+    export ZOO_LOG_DIR="/data/zookeeper/logs"
+    export ZOOPIDFILE="/data/zookeeper/vars/run/zookeeper-server.pid"
 
 四、启动程序
 ----------
 
-4.1 启动应用程序 ``所有节点``::
+4.1 启动应用程序 ``所有节点``:
     
 二进制启动::
 
-    $ cd /opt/zookeeper
-    $ ZOOCFGDIR=/data/zookeeper/conf \
-      ZOO_LOG_DIR=/data/zookeeper/logs \
-      bin/zkServer.sh start
+    $ su zookep -s /bin/bash -c "/opt/zookeeper/bin/zkServer.sh start"
 
 SysV启动脚本::
 
@@ -187,12 +218,21 @@ SysV启动脚本::
 
 supervisor启动配置:
 
+.. code-block:: bash
 
-.. note::
-    
-    选择一种启动方式即可，一般使用SysV启动脚本启动即可。
+    [program:zookeeper]
+    command=/opt/zookeeper/bin/zkServer.sh start-foreground
+    user=zookep
+    stdout_logfile=/data/zookeeper/logs/zookeeper.out
+    stdout_logfile_maxbytes=100MB
+    stdout_logfile_backups=10
+    redirect_stderr=true
 
-4.2 检测启动状态 ``所有节点``::
+.. warning::
+
+    选择一种启动方式即可，一般使用SysV启动脚本启动即可。如果后续准备使用 supervisor 启动，则不要执行 ``2.7步骤``。
+
+4.2 检测启动状态 ``所有节点``:
 
 方法一:
 
@@ -257,29 +297,10 @@ supervisor启动配置:
     Node count: 4
 
 
+五、附属功能
+------------
 
-6 规范环境
-----------
-
-6.2 开机启动::
-
-    ---
-    
-6.1 添加PATH:
-
-.. code-block:: bash
-
-    $ vim /etc/profile.d/zookeeper.sh
-    # 添加如下内容:
-    PATH=$PATH:/opt/zookeeper/bin
-    export PATH
-    $ source /etc/profile.d/zookeeper.sh
-
-
-7 补充说明
-----------
-
-7.1 主要配置说明:
+5.1 主要配置说明:
 
 ``dataDir``::
 

@@ -13,7 +13,7 @@
     部署方式: tar
     操作用户: root
     运行用户: hdfs
-    软件版本: hadoop-2.7.3.tar.gz
+    软件版本: hadoop
     所需文件: hadoop-2.7.3.tar.gz, jdk-8u60-linux-x64.gz
 
 0.2 节点说明:

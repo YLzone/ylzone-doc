@@ -22,6 +22,7 @@ Welcome to ylzone's documentation!
    docs/Nexus/nexus_pool.rst
    docs/Hadoop/hadoop_pool.rst
    docs/Hbase/hbase_pool.rst
+   docs/Availability/availability_pool.rst
 
 
 Indices and tables

@@ -78,7 +78,7 @@
 
 2.2 创建所需目录::
 
-    $ mkdir -pv /data/mysql/{back,conf,data,logs,vars}
+    $ mkdir -pv /data/mysql/{back,conf,data,logs/log-bin,vars}
     $ mkdir -pv /data/mysql/vars/{run,tmp}
 
 2.3 创建所需文件::
@@ -105,6 +105,7 @@
 
     $ chkconfig --add mysql
     $ chkconfig mysql on
+    $ chkconfig --list mysql
 
 .. warning::
 
@@ -134,11 +135,11 @@
     socket                 = /data/mysql/vars/tmp/mysql.sock
     pid-file               = /data/mysql/vars/run/mysqld.pid
     symbolic-links         = 0
-    max_connections        = 1000
-    max_allowed_packet     = 512M
+    max-connections        = 1000
+    max-allowed-packet     = 512M
     character-set-server   = utf8
-    lower_case_table_names = 1
-    transaction_isolation  = READ-COMMITTED
+    lower-case-table-names = 1
+    transaction-isolation  = READ-COMMITTED
     skip-name-resolve
     skip-external-locking
     sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
@@ -146,27 +147,45 @@
 
     #---============ 日志相关 =============---
     # 运行时输出日志。
-    log_error              = /data/mysql/logs/mysql.error
+    log-error              = /data/mysql/logs/mysql.error
 
     # 一般查询日志，调试开启正常运行时关闭。
-    general_log            = off
-    general_log_file       = /data/mysql/logs/mysql.general
+    general-log            = OFF
+    general-log-file       = /data/mysql/logs/mysql.general
 
     # 慢查询日志，时间阈值默认为2秒。
-    slow_query_log         = off
-    slow_query_log_file    = /data/mysql/logs/mysql.slow
-    slow_launch_time       = 2
+    slow-query-log         = OFF
+    slow-query-log-file    = /data/mysql/logs/mysql.slow
+    slow-launch-time       = 2
      
     # 二进制日志，主从复制时使用。
-    #log_bin               =
-    #log_bin_index
-    #log_bin_basename
+    #log-bin               = /data/mysql/logs/log-bin/vm01-mysql-bin
+    #binlog-format         = ROW
+    #max-binlog-size       = 1024m
+    #expire-logs-days      = 15
+
+    #---=========== GITD模式 =============---
+    server-id                    = 100
+    gtid-mode                    = ON
+    slave-parallel-workers       = 2    
+    sync-master-info             = 1    
+    master-verify-checksum       = 1    
+    slave-sql-verify-checksum    = 1    
+    binlog-rows-query-log_events = 1    
+    log-slave-updates            = true
+    enforce-gtid-consistency     = true    
+    master-info-repository       = TABLE    
+    relay-log-info-repository    = TABLE    
+    binlog-checksum              = CRC32    
+    report-host                  = 192.168.1.111     #从库ip地址
 
 
 四、启动程序
 ------------
 
-4.1 启动之前操作::
+4.1 启动之前操作:
+
+初始化数据库::
 
     $ /opt/mysql/scripts/mysql_install_db --user=mysql --basedir=/opt/mysql --datadir=/data/mysql/data
 

@@ -96,6 +96,7 @@
                   --with-http_gzip_static_module
     $ make
     $ make install
+    $ echo "version: nginx-1.12.1" >> /opt/nginx/VERSION.md
 
 2.2 创建所需目录::
 

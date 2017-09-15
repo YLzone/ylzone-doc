@@ -98,7 +98,7 @@
     
 2.5 修改环境变量::
 
-    $ echo "export PATH=$PATH:/opt/mysql/bin" > /etc/profile.d/mysql.sh
+    $ echo 'export PATH=$PATH:/opt/mysql/bin' > /etc/profile.d/mysql.sh
     $ source /etc/profile.d/mysql.sh
 
 2.6 设置开机启动::

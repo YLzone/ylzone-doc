@@ -12,6 +12,8 @@ Welcome to ylzone's documentation!
     
    docs/00-python/python_pool.rst
    docs/Docker/docker_pool.rst
+   docs/Mesos/mesos_pool.rst
+   docs/Jenkins/jenkins_pool.rst
    docs/Redis/redis_pool.rst
    docs/Elasticsearch/es_pool.rst
    docs/Mysql/mysql_pool.rst

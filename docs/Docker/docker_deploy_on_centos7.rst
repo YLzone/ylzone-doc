@@ -127,7 +127,7 @@
     ExecStart=/usr/bin/dockerd  $DOCKER_OPTS
 
 
-    # 修改启动参数。
+    # 修改启动参数，增加信任私有仓库。
     $ vim /etc/default/docker
 
     ↓ ↓ ↓ ↓ ↓ 修改如下内容 ↓ ↓ ↓ ↓ ↓
@@ -174,7 +174,7 @@
 五、附属功能
 ------------
 
-5.1 部署docker镜像操作:
+5.1 部署docker私有仓库:
 
 .. code-block:: bash
 

@@ -72,33 +72,33 @@
 2.1 解压缩软件包::
 
     $ cd /tmp
-    $ tar xf mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz -C /opt
-    $ mv /opt/mysql-5.6.36-linux-glibc2.5-x86_64 /opt/mysql
-    $ echo "version: mysql-5.6.36" >> /opt/mysql/VERSION.md
+    $ tar xf mysql-5.6.36-linux-glibc2.5-x86_64.tar.gz -C /program/service/mysql
+    $ cd /program/service/mysql
+    $ mv mysql-5.6.36-linux-glibc2.5-x86_64 mysql-5.6.36
+    $ ln -sv mysql-5.6.36 default
 
 2.2 创建所需目录::
 
-    $ mkdir -pv /data/mysql/{back,conf,data,logs/log-bin,vars}
-    $ mkdir -pv /data/mysql/vars/{run,tmp}
+    $ mkdir -pv /data/service/mysql/{back,conf,data,logs/log-bin,vars/{run,tmp}}
 
 2.3 创建所需文件::
 
-    $ cp /opt/mysql/support-files/my-default.cnf /data/mysql/conf/my.cnf
+    $ cd /program/service/mysql/default
+    $ sed -i 's@/usr/local/mysql@/program/service/mysql/default@g' bin/mysqld_safe
+    $ sed -i 's@/usr/local/mysql@/program/service/mysql/default@g' support-files/mysql.server
+    $ cp support-files/my-default.cnf /data/service/mysql/conf/my.cnf
+    $ cp support-files/mysql.server /data/service/mysql/sbin
     $ mv /etc/my.cnf /etc/my.cnf.bak
-    $ ln -sv /data/mysql/conf/my.cnf /etc/my.cnf
-    $ sed -i 's/\/usr\/local\/mysql/\/opt\/mysql/g' /opt/mysql/bin/mysqld_safe
-    $ sed -i 's/\/usr\/local\/mysql/\/opt\/mysql/g' /opt/mysql/support-files/mysql.server
-    $ cp /opt/mysql/support-files/mysql.server /etc/init.d/mysql
+    $ ln -sv /data/service/mysql/conf/my.cnf /etc/my.cnf
 
 2.4 修改文件权限::
 
-    $ chown -R root:root /opt/mysql
-    $ chown -R mysql:mysql /data/mysql
-    $ chown -R root:root /data/mysql/conf
+    $ chown -R depuser:depuser /opt/mysql
+    $ chown -R svcuser:svcuser /data/mysql
     
 2.5 修改环境变量::
 
-    $ echo 'export PATH=$PATH:/opt/mysql/bin' > /etc/profile.d/mysql.sh
+    $ echo 'export PATH=$PATH:/program/service/mysql/default/bin' > /etc/profile.d/mysql.sh
     $ source /etc/profile.d/mysql.sh
 
 2.6 设置开机启动::
@@ -124,16 +124,16 @@
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     [client]
     port                   = 3306
-    socket                 = /data/mysql/vars/tmp/mysql.sock
+    socket                 = /data/service/mysql/vars/tmp/mysql.sock
 
     [mysqld]
     user                   = mysql
     port                   = 3306
-    basedir                = /opt/mysql
-    datadir                = /data/mysql/data
-    tmpdir                 = /data/mysql/vars/tmp
-    socket                 = /data/mysql/vars/tmp/mysql.sock
-    pid-file               = /data/mysql/vars/run/mysqld.pid
+    basedir                = /program/service/mysql/default
+    datadir                = /data/service/mysql/data
+    tmpdir                 = /data/service/mysql/vars/tmp
+    socket                 = /data/service/mysql/vars/tmp/mysql.sock
+    pid-file               = /data/service/mysql/vars/run/mysqld.pid
     symbolic-links         = 0
     max-connections        = 1000
     max-allowed-packet     = 512M
@@ -147,19 +147,19 @@
 
     #---============ 日志相关 =============---
     # 运行时输出日志。
-    log-error              = /data/mysql/logs/mysql.error
+    log-error              = /data/service/mysql/logs/mysql.error
 
     # 一般查询日志，调试开启正常运行时关闭。
     general-log            = OFF
-    general-log-file       = /data/mysql/logs/mysql.general
+    general-log-file       = /data/service/mysql/logs/mysql.general
 
     # 慢查询日志，时间阈值默认为2秒。
     slow-query-log         = OFF
-    slow-query-log-file    = /data/mysql/logs/mysql.slow
+    slow-query-log-file    = /data/service/mysql/logs/mysql.slow
     slow-launch-time       = 2
      
     # 二进制日志，主从复制时使用。
-    #log-bin               = /data/mysql/logs/log-bin/vm01-mysql-bin
+    #log-bin               = /data/service/mysql/logs/log-bin/vm01-mysql-bin
     #binlog-format         = ROW
     #max-binlog-size       = 1024m
     #expire-logs-days      = 15
@@ -187,13 +187,13 @@
 
 初始化数据库::
 
-    $ /opt/mysql/scripts/mysql_install_db --user=mysql --basedir=/opt/mysql --datadir=/data/mysql/data
+    $ /program/service/mysql/default/scripts/mysql_install_db --user=mysql --basedir=/program/service/mysql/default --datadir=/data/service/mysql/data
 
 4.2 启动应用程序:
     
 二进制启动::
 
-    $ setsid /opt/mysql/bin/mysqld_safe --defaults-file=/data/mysql/conf/my.cnf &>/dev/null
+    $ setsid /opt/mysql/bin/mysqld_safe --defaults-file=/data/service/mysql/conf/my.cnf &>/dev/null
 
 SysV启动脚本::
 
@@ -204,8 +204,8 @@ supervisor启动配置:
 .. code-block:: bash
 
     [program:mysql]
-    command=/usr/local/python2.7.9/bin/pidproxy /data/mysql/data/mysqld.pid
-     /opt/mysql/bin/mysqld_safe --defaults-file=/etc/my.cnf
+    command=/usr/local/python2.7.9/bin/pidproxy /data/service/mysql/data/mysqld.pid
+     /program/service/mysql/default/bin/mysqld_safe --defaults-file=/etc/my.cnf
     stdout_logfile=/tmp/mysql.log
     stdout_logfile_maxbytes=100MB
     stdout_logfile_backups=10

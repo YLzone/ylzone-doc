@@ -31,11 +31,11 @@
 
 0.3 目录说明::
 
-    部署位置: /opt/tomcat7
-    配置目录: /data/tomcat7/conf
-    数据目录: /data/tomcat7/data
-    日志目录: /data/tomcat7/logs
-    PID 目录: /data/tomcat7/vars/run
+    部署位置: /program/service/tomcat7
+    配置目录: /data/project/tomcat7/conf
+    数据目录: /data/project/tomcat7/data
+    日志目录: /data/project/tomcat7/logs
+    运行目录: /data/project/tomcat7/vars
 
 0.4 端口说明::
 
@@ -57,18 +57,19 @@
 .. code-block:: bash
 
     # 安装软件包
-    $ mkdir -v /usr/java
-    $ tar xvf jdk-7u55-linux-x64.gz -C /usr/java
-    $ ln -sv /usr/java/jdk1.7.0_55 /usr/java/latest
-    $ ln -sv /usr/java/latest /usr/java/default
-    $ chown -R root:root /usr/java/jdk1.7.0_55
-    $ echo 'export JAVA_HOME=/usr/java/default' > /etc/profile.d/java.sh
+    $ cd ~/packages
+    $ mkdir -pv /program/basic/java
+    $ tar xvf jdk-8u60-linux-x64.gz -C /program/basic/java
+    $ ln -sv /program/basic/java/jdk1.8.0_60 /program/basic/java/latest
+    $ ln -sv /program/basic/java/latest /program/basic/java/default
+    $ chown -R depuser:depuser /usr/java/jdk1.8.0_60
+    $ echo 'export JAVA_HOME=/program/basic/java/default' > /etc/profile.d/java.sh
     $ echo 'export PATH=${PATH}:${JAVA_HOME}/bin' >> /etc/profile.d/java.sh
     $ source /etc/profile.d/java.sh
 
     # 验证安装，显示如下内容表示成功。
     $ java -version
-    java version "1.7.0_55"
+    java version "1.8.0_60"
     Java(TM) SE Runtime Environment (build 1.7.0_55-b13)
     Java HotSpot(TM) 64-Bit Server VM (build 24.55-b03, mixed mode)
 
@@ -125,36 +126,34 @@
 
 2.1 解压软件包::
 
-    $ cd /tmp
-    $ tar xf apache-tomcat-7.0.72.tar.gz -C /opt
-    $ mv /opt/apache-tomcat-7.0.72/ /opt/tomcat7
-    $ echo "version: tomcat-7.0.72" >> /opt/tomcat7/VERSION.md
+    $ cd ~/packages
+    $ tar xf apache-tomcat-7.0.82.tar.gz -C /program/service/tomcat
+    $ mv /program/service/tomcat/apache-tomcat-7.0.82 /program/service/tomcat/tomcat-7.0.82
 
 2.2 整理文件::
 
-    $ mv /opt/tomcat7/{conf,conf.orig}
-    $ rm -fv /opt/tomcat7/{LICENSE,NOTICE,RELEASE-NOTES,RUNNING.txt}
-    $ rm -fv /opt/tomcat7/bin/*.bat
-    $ rm -rfv /opt/tomcat7/{logs,temp,webapps,work}
+    $ mv /program/service/tomcat/tomcat-7.0.82/{conf,conf.orig}
+    $ rm -fv /program/service/tomcat/tomcat-7.0.82/{LICENSE,NOTICE,RELEASE-NOTES,RUNNING.txt}
+    $ rm -fv /program/service/tomcat/tomcat-7.0.82/bin/*.bat
+    $ rm -rfv /program/service/tomcat/tomcat-7.0.82/{logs,temp,webapps,work}
 
 2.3 创建所需目录::
 
-    $ mkdir -pv /data/tomcat7/{apps,sbin,conf,data,logs,vars,back}
-    $ mkdir -pv /data/tomcat7/vars/{run,tmp,wap,wrk}
-    $ mkdir -pv /data/tomcat7/vars/wap/ROOT
+    $ mkdir -pv /data/project/tomcat7/{apps,sbin,conf,data,logs,vars,back}
+    $ mkdir -pv /data/project/tomcat7/vars/{run,tmp,wap,wrk}
+    $ mkdir -pv /data/project/tomcat7/vars/wap/ROOT
     
 2.4 创建所需文件::
     
-    $ cp /opt/tomcat7/conf.orig/* /data/tomcat7/conf
-    $ echo 'Index Successful!' > /data/tomcat7/vars/wap/ROOT/index.html
-    $ touch /data/tomcat7/sbin/startup
-    $ touch /data/tomcat7/sbin/setenv.sh
+    $ cp /program/service/tomcat/tomcat-7.0.82/conf.orig/* /data/project/tomcat7/conf
+    $ echo 'Index Successful!' > /data/project/tomcat7/vars/wap/ROOT/index.html
+    $ touch /data/project/tomcat7/sbin/startup
+    $ touch /data/project/tomcat7/sbin/setenv.sh
 
 2.5 修改文件权限::
 
-    $ chown -R root:root /opt/tomcat7
-    $ chown -R appuser:appuser /data/tomcat7
-
+    $ chown -R root:root /program/service/tomcat/tomcat-7.0.82
+    $ chown -R appuser:appuser /data/project/tomcat7
 
 2.6 设置开机启动::
 
@@ -172,7 +171,7 @@
 
 .. code-block:: xml
 
-    $ vim /data/tomcat7/conf/server.xml
+    $ vim /data/project/tomcat7/conf/server.xml
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     <?xml version='1.0' encoding='utf-8'?>
@@ -244,24 +243,24 @@
 
     export CATALINA_BASE=${SELF_BASE}
     source ${SELF_BASE}/sbin/setenv.sh
-    exec /opt/tomcat7/bin/catalina.sh "$@"
+    exec /program/service/tomcat/tomcat-7.0.82/bin/catalina.sh "$@"
 
 .. code-block:: bash
 
     # 赋予脚本执行权限
-    $ chmod +x /data/tomcat7/sbin/startup
+    $ chmod +x /data/project/tomcat7/sbin/startup
 
 3.3 修改日志、PID目录:
 
 .. code-block:: bash
 
-    $ vim /data/tomcat7/sbin/setenv.sh
+    $ vim /data/project/tomcat7/sbin/setenv.sh
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     #--============================================--#
     #                   环境相关
     #--============================================--#
-    export JAVA_HOME="/usr/java/default"
+    export JAVA_HOME="/program/basic/java/default"
     export CATALINA_OUT="$CATALINA_BASE"/logs/catalina.out
     export CATALINA_PID="$CATALINA_BASE"/vars/run/tomcat7.pid
     export CATALINA_TMPDIR="$CATALINA_BASE"/vars/tmp
@@ -304,8 +303,8 @@
 
 修改日志策略::
 
-    $ sed -i '/^handlers =/ s/^/#/' /data/tomcat7/conf/logging.properties
-    $ sed -i '18s/.handlers/handlers/' /data/tomcat7/conf/logging.properties
+    $ sed -i '/^handlers =/ s/^/#/' /data/project/tomcat7/conf/logging.properties
+    $ sed -i '18s/.handlers/handlers/' /data/project/tomcat7/conf/logging.properties
 
 
 四、启动程序
@@ -315,7 +314,7 @@
     
 二进制启动::
 
-    $ su appuser -s /bin/bash -c "/data/tomcat7/sbin/startup start"
+    $ su appuser -s /bin/bash -c "/data/project/tomcat7/sbin/startup start"
 
 .. note::
 
@@ -330,8 +329,8 @@ supervisor启动配置:
 .. code-block:: bash
 
     [program:tomcat7]
-    command=/data/tomcat/sbin/startup run
-    stdout_logfile=/data/tomcat7/logs/supervisor.out
+    command=/data/project/tomcat7/sbin/startup run
+    stdout_logfile=/data/project/tomcat7/logs/supervisor.out
     stdout_logfile_maxbytes=500MB
     stdout_logfile_backups=10
     redirect_stderr=true

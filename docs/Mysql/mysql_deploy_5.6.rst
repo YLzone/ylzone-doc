@@ -59,7 +59,7 @@
 
 1.1 安装依赖组件::
 
-    $ yum install libaio perl
+    $ yum install libaio perl numactl
 
 1.2 创建运行用户::
 
@@ -83,13 +83,13 @@
 
 2.3 创建所需文件::
 
-    $ cd /program/service/mysql/default
-    $ sed -i 's@/usr/local/mysql@/program/service/mysql/default@g' bin/mysqld_safe
-    $ sed -i 's@/usr/local/mysql@/program/service/mysql/default@g' support-files/mysql.server
-    $ cp support-files/my-default.cnf /data/service/mysql/conf/my.cnf
-    $ cp support-files/mysql.server /data/service/mysql/sbin
-    $ mv /etc/my.cnf /etc/my.cnf.bak
-    $ ln -sv /data/service/mysql/conf/my.cnf /etc/my.cnf
+    cd /program/service/mysql/default
+    sed -i 's@/usr/local/mysql@/program/service/mysql/default@g' bin/mysqld_safe
+    sed -i 's@/usr/local/mysql@/program/service/mysql/default@g' support-files/mysql.server
+    cp support-files/my-default.cnf /data/service/mysql/conf/my.cnf
+    cp support-files/mysql.server /data/service/mysql/sbin
+    mv /etc/my.cnf /etc/my.cnf.bak
+    ln -sv /data/service/mysql/conf/my.cnf /etc/my.cnf
 
 2.4 修改文件权限::
 
@@ -119,7 +119,7 @@
 
 .. code-block:: bash
 
-    $ vim /data/mysql/conf/my.cnf
+    $ vim /data/service/mysql/conf/my.cnf
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     [client]
@@ -127,7 +127,7 @@
     socket                 = /data/service/mysql/vars/tmp/mysql.sock
 
     [mysqld]
-    user                   = mysql
+    user                   = svcuser
     port                   = 3306
     basedir                = /program/service/mysql/default
     datadir                = /data/service/mysql/data

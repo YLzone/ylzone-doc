@@ -234,7 +234,7 @@
 
 .. code-block:: bash
  
-    $ vim /data/tomcat7/sbin/startup
+    $ vim /data/project/tomcat7/sbin/startup
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     #!/bin/bash

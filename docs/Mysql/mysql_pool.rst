@@ -6,4 +6,4 @@ Mysql相关内容
    :maxdepth: 1
 
    mysql_deploy_5.6.rst
-   mysql_config_general_5.7.rst
+   mysql_deploy_5.7.rst

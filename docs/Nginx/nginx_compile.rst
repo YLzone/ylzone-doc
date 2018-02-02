@@ -309,7 +309,8 @@
     upstream www.ylzone.com {
 
         ip_hash;
-        server 192.168.182.145:8080;
+        server 192.168.182.145:8080 weight=1;
+        server 192.168.182.146:8080 weight=1;
 
     }
 

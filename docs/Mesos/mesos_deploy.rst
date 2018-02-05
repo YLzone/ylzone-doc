@@ -62,6 +62,9 @@
 
     # 依赖部署文件
     根据yum自动安装
+    
+    # 相关地址连接
+    官方文档: http://mesos.apache.org/documentation
 
 0.5 补充说明::
 

@@ -13,8 +13,8 @@
     部署方式: compile
     操作用户: root
     运行用户: nginx
-    软件版本: nginx-1.12.1
-    所需文件: nginx-1.12.1.tar.gz
+    软件版本: nginx-1.12.2
+    所需文件: nginx-1.12.2.tar.gz
 
 0.2 节点说明:
 
@@ -31,13 +31,13 @@
     
 0.3 目录说明::
 
-    程序目录: /opt/nginx
-    备份目录: /data/nginx/bach
-    配置目录: /data/nginx/conf
-    数据目录: /data/nginx/data
-    日志目录: /data/nginx/logs
-    临时目录: /data/nginx/vars/tmp
-    运行目录: /data/nginx/vars/run
+    程序目录: /program/service/nginx
+    备份目录: /data/service/nginx/back
+    配置目录: /data/service/nginx/conf
+    数据目录: /data/service/nginx/data
+    日志目录: /data/service/nginx/logs
+    临时目录: /data/service/nginx/vars/tmp
+    运行目录: /data/service/nginx/vars/run
 
 0.4 端口说明::
 
@@ -59,9 +59,9 @@
 1.1 安装依赖组件::
 
     $ yum install gcc \
-                  pcre pcre-devel
+                  pcre pcre-devel \
                   zlib zlib-devel \
-                  openssl openssl-devel \
+                  openssl openssl-devel
 
 1.2 创建运行用户::
 
@@ -74,21 +74,21 @@
 2.1 解压编译软件::
 
     $ cd /tmp
-    $ tar xf nginx-1.12.1.tar.gz
-    $ cd nginx-1.12.1
-    $ ./configure --prefix=/data/nginx/data \
-                  --conf-path=/data/nginx/conf/nginx.conf \
-                  --sbin-path=/opt/nginx/sbin/nginx \
-                  --modules-path=/opt/nginx/lib/modules \
-                  --http-log-path=/data/nginx/logs/access.log \
-                  --error-log-path=/data/nginx/logs/error.log \
-                  --pid-path=/data/nginx/vars/run/nginx.pid \
-                  --lock-path=/data/nginx/vars/run/nginx.lock \
-                  --http-client-body-temp-path=/data/nginx/vars/tmp/client \
-                  --http-proxy-temp-path=/data/nginx/vars/tmp/proxy \
-                  --http-fastcgi-temp-path=/data/nginx/vars/tmp/fastcgi \
-                  --http-uwsgi-temp-path=/data/nginx/vars/tmp/uwsgi \
-                  --http-scgi-temp-path=/data/nginx/vars/tmp/scgi \
+    $ tar xf nginx-1.12.2.tar.gz
+    $ cd nginx-1.12.2
+    $ ./configure --prefix=/data/service/nginx/data \
+                  --conf-path=/data/service/nginx/conf/nginx.conf \
+                  --sbin-path=/program/service/nginx/sbin/nginx \
+                  --modules-path=/program/service/nginx/lib/modules \
+                  --http-log-path=/data/service/nginx/logs/access.log \
+                  --error-log-path=/data/service/nginx/logs/error.log \
+                  --pid-path=/data/service/nginx/vars/run/nginx.pid \
+                  --lock-path=/data/service/nginx/vars/run/nginx.lock \
+                  --http-client-body-temp-path=/data/service/nginx/vars/tmp/client_body \
+                  --http-proxy-temp-path=/data/service/nginx/vars/tmp/proxy \
+                  --http-fastcgi-temp-path=/data/service/nginx/vars/tmp/fastcgi \
+                  --http-uwsgi-temp-path=/data/service/nginx/vars/tmp/uwsgi \
+                  --http-scgi-temp-path=/data/service/nginx/vars/tmp/scgi \
                   --user=nginx \
                   --group=nginx \
                   --with-http_ssl_module \
@@ -96,20 +96,20 @@
                   --with-http_gzip_static_module
     $ make
     $ make install
-    $ echo "version: nginx-1.12.1" >> /opt/nginx/VERSION.md
+    $ echo "version: nginx-1.12.2" >> /program/service/nginx/VERSION.md
 
 2.2 创建所需目录::
 
-    $ mkdir -pv /data/nginx/{back,conf,data,logs,vars}
-    $ mkdir -pv /data/nginx/conf/{conf.d,cert}
-    $ mkdir -pv /data/nginx/vars/{run,tmp}
-    $ mkdir -pv /data/nginx/vars/tmp/{client,proxy,fastcgi,uwsgi,scgi}
+    $ mkdir -pv /data/service/nginx/{back,conf,data,logs,vars}
+    $ mkdir -pv /data/service/nginx/conf/{conf.d,cert}
+    $ mkdir -pv /data/service/nginx/vars/{run,tmp}
+    $ mkdir -pv /data/service/nginx/vars/tmp/{client,proxy,fastcgi,uwsgi,scgi}
 
 2.3 创建所需文件::
 
-    $ touch /data/nginx/conf/conf.d/vhost.default.conf
-    $ touch /data/nginx/conf/conf.d/vhost.ylone.com.conf
-    $ touch /data/nginx/conf/conf.d/vhost.upstream.conf
+    $ touch /data/service/nginx/conf/conf.d/vhost.default.conf
+    $ touch /data/service/nginx/conf/conf.d/vhost.ylone.com.conf
+    $ touch /data/service/nginx/conf/conf.d/vhost.upstream.conf
 
 .. note::
 
@@ -117,13 +117,13 @@
 
 2.4 修改文件权限::
 
-    $ chown -R root:root /opt/nginx
-    $ chown -R nginx:nginx /data/nginx
-    $ chown -R root:root /data/nginx/conf
+    $ chown -R root:root /program/service/nginx
+    $ chown -R nginx:nginx /data/service/nginx
+    $ chown -R root:root /data/service/nginx/conf
     
 2.5 修改环境变量::
 
-    $ echo 'export PATH=$PATH:/opt/nginx/sbin' > /etc/profile.d/nginx.sh
+    $ echo 'export PATH=$PATH:/program/service/nginx/sbin' > /etc/profile.d/nginx.sh
     $ source /etc/profile.d/nginx.sh
 
 2.6 设置开机启动::
@@ -142,14 +142,14 @@
 
 .. code-block:: bash
 
-    $ vim /data/nginx/conf/nginx.conf
+    $ vim /data/service/nginx/conf/nginx.conf
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     daemon on;
     user   nginx;
 
-    error_log  /data/nginx/logs/error.log;
-    pid        /data/nginx/vars/run/nginx.pid;
+    error_log  /data/service/nginx/logs/error.log;
+    pid        /data/service/nginx/vars/run/nginx.pid;
 
     worker_processes     2;
     worker_rlimit_nofile 2048;
@@ -182,7 +182,7 @@
                           '"agent":"$http_user_agent",'
                           '"status":"$status"}';
     
-        access_log  /data/nginx/logs/access.log  main;
+        access_log  /data/service/nginx/logs/access.log  main;
         
         server_tokens off;             # 隐藏nginx版本号
     
@@ -233,13 +233,13 @@
 
         # -----========= 导入扩展配置 ============----- #
         #
-        include /data/nginx/conf/conf.d/*.conf;
+        include /data/service/nginx/conf/conf.d/*.conf;
 
     }
 
 .. code-block:: bash
 
-    $ vim /data/nginx/conf/conf.d/vhost.default.conf
+    $ vim /data/service/nginx/conf/conf.d/vhost.default.conf
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     server {
@@ -263,7 +263,7 @@
 
 .. code-block:: bash
 
-    $ vim /data/nginx/conf/conf.d/vhost.ylzone.com.conf
+    $ vim /data/service/nginx/conf/conf.d/vhost.ylzone.com.conf
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     server {
@@ -303,7 +303,7 @@
 
 .. code-block:: bash
 
-    $ vim /data/nginx/conf/conf.d/upstream.conf
+    $ vim /data/service/nginx/conf/conf.d/upstream.conf
 
     ↓ ↓ ↓ ↓ ↓ 替换如下内容 ↓ ↓ ↓ ↓ ↓
     upstream www.ylzone.com {
@@ -330,7 +330,7 @@
     
 二进制启动::
 
-    $ /opt/nginx/sbin/nginx
+    $ /program/service/nginx/sbin/nginx
 
 SysV启动脚本::
 
@@ -341,8 +341,8 @@ supervisor启动配置:
 .. code-block:: bash
 
     [program:nginx]
-    command=/opt/nginx/sbin/nginx -g "daemon off"
-    stdout_logfile=/data/nginx/logs/supervisor.out
+    command=/program/service/nginx/sbin/nginx -g "daemon off"
+    stdout_logfile=/data/service/nginx/logs/supervisor.out
     stdout_logfile_maxbytes=100MB
     stdout_logfile_backups=10
     redirect_stderr=true
@@ -388,5 +388,5 @@ supervisor启动配置:
     $ vim /usr/share/vim/vim74/filetype.vim
 
     ↓ ↓ ↓ ↓ ↓ 追加如下内容 ↓ ↓ ↓ ↓ ↓
-    au BufRead,BufNewFile /data/nginx/conf/*,/data/nginx/conf/conf.d/* if &ft == '' | setfiletype nginx | endif
+    au BufRead,BufNewFile /data/service/nginx/conf/*,/data/service/nginx/conf/conf.d/* if &ft == '' | setfiletype nginx | endif
 
